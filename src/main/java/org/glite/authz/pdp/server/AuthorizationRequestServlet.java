@@ -1,0 +1,228 @@
+/*
+ * Copyright 2008 EGEE Collaboration
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.glite.authz.pdp.server;
+
+import java.io.IOException;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+
+import org.glite.authz.common.AuthorizationServiceException;
+import org.glite.authz.common.http.BaseHttpServlet;
+import org.glite.authz.pdp.config.PDPConfiguration;
+import org.glite.authz.pdp.policy.PolicyRepository;
+import org.herasaf.xacml.core.combiningAlgorithm.CombiningAlgorithm;
+import org.herasaf.xacml.core.context.RequestInformation;
+import org.herasaf.xacml.core.context.RequestInformationFactory;
+import org.herasaf.xacml.core.context.impl.DecisionType;
+import org.herasaf.xacml.core.context.impl.RequestType;
+import org.herasaf.xacml.core.policy.impl.PolicySetType;
+import org.herasaf.xacml.core.utils.ContextAndPolicy;
+import org.joda.time.DateTime;
+import org.opensaml.common.binding.BasicSAMLMessageContext;
+import org.opensaml.saml1.binding.encoding.HTTPSOAP11Encoder;
+import org.opensaml.saml2.binding.decoding.HTTPSOAP11Decoder;
+import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.NameID;
+import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.ws.message.decoder.MessageDecodingException;
+import org.opensaml.ws.message.encoder.MessageEncodingException;
+import org.opensaml.ws.security.SecurityPolicyResolver;
+import org.opensaml.ws.security.provider.StaticSecurityPolicyResolver;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
+import org.opensaml.xacml.ctx.StatusCodeType;
+import org.opensaml.xacml.ctx.DecisionType.DECISION;
+import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType;
+import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionStatementType;
+import org.opensaml.xml.parse.BasicParserPool;
+import org.opensaml.xml.security.SecurityException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/** PDP Servlet. */
+public class AuthorizationRequestServlet extends BaseHttpServlet {
+
+    /** Class logger. */
+    private final Logger log = LoggerFactory.getLogger(AuthorizationRequestServlet.class);
+
+    /** PDP configuration. */
+    private PDPConfiguration pdpConfig;
+
+    /** Resolver used to get the security policy for incoming messages. */
+    private SecurityPolicyResolver messageSecurityPolicyResolver;
+
+    /** The decoder used to decode incoming message. */
+    private HTTPSOAP11Decoder messageDecoder;
+
+    /** The encoder used to write outgoing messages. */
+    private HTTPSOAP11Encoder messageEncoder;
+
+    /** Factory used to create HEARSAF request information objects. */
+    private RequestInformationFactory reqInfoFactory;
+
+    /** Repository of XACML policies. */
+    private PolicyRepository policyRepo;
+
+    /** {@inheritDoc} */
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+
+        pdpConfig = (PDPConfiguration) getServletContext().getAttribute(PDPConfiguration.BINDING_NAME);
+        if (pdpConfig == null) {
+            throw new ServletException("Unable to initialize, no configuration available in servlet context");
+        }
+
+        messageSecurityPolicyResolver = new StaticSecurityPolicyResolver(pdpConfig
+                .getAuthzDecisionQuerySecurityPolicy());
+
+        BasicParserPool parserPool = new BasicParserPool();
+        parserPool.setMaxPoolSize(pdpConfig.getMaxRequests());
+
+        messageDecoder = new HTTPSOAP11Decoder(parserPool);
+
+        messageEncoder = new HTTPSOAP11Encoder();
+
+        reqInfoFactory = new RequestInformationFactory();
+
+        policyRepo = new PolicyRepository(pdpConfig);
+    }
+
+    /** {@inheritDoc} */
+    protected void doPost(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException,
+            IOException {
+        try {
+            AuthzRequestMessageContext messageContext = createMessageContext(httpRequest, httpResponse);
+            messageDecoder.decode(messageContext);
+            evaluateRequest(messageContext);
+            messageEncoder.encode(messageContext);
+        } catch (MessageDecodingException e) {
+            log.error("Unable to decode incoming request", e);
+
+        } catch (SecurityException e) {
+            log.error("Incoming request does not meeting security requirements", e);
+
+        } catch (AuthorizationServiceException e) {
+            log.error("Error processing authorization request.", e);
+
+        } catch (MessageEncodingException e) {
+            log.error("Error encoding response.", e);
+        }
+    }
+
+    /** {@inheritDoc} */
+    protected String getSupportedMethods() {
+        return "POST";
+    }
+
+    /**
+     * Creates a message context from the incoming request and outgoing response.
+     * 
+     * @param httpRequest incoming request
+     * @param httpResponse outgoing response
+     * 
+     * @return the generated message context
+     */
+    protected AuthzRequestMessageContext createMessageContext(HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        AuthzRequestMessageContext msgCtx = new AuthzRequestMessageContext();
+
+        msgCtx.setInboundMessageTransport(new HttpServletRequestAdapter(httpRequest));
+        msgCtx.setOutboundMessageTransport(new HttpServletResponseAdapter(httpResponse, httpRequest.isSecure()));
+        msgCtx.setSecurityPolicyResolver(messageSecurityPolicyResolver);
+
+        return msgCtx;
+    }
+
+    /**
+     * Handles the incoming authorization request.
+     * 
+     * @param messageContext incoming message context
+     * 
+     * @throws AuthorizationServiceException thrown if there is a problem evaluating the authorization decision request
+     */
+    protected void evaluateRequest(AuthzRequestMessageContext messageContext) throws AuthorizationServiceException {
+        PolicySetType policy = policyRepo.getPolicy();
+        RequestInformation reqInfo = reqInfoFactory.createRequestInformation(null, null);
+
+        CombiningAlgorithm combiningAlgo = policy.getCombiningAlg();
+        DecisionType decision = combiningAlgo.evaluate(getXacmlRequest(messageContext), policy, reqInfo);
+
+        messageContext.setOutboundSAMLMessageIssueInstant(new DateTime());
+        messageContext.setOutboundMessageIssuer(pdpConfig.getEntityId());
+        messageContext.setOutboundSAMLMessage(buildSAMLResponse(messageContext, decision, StatusCodeType.SC_OK));
+        messageContext.setOutboundSAMLMessageId(messageContext.getOutboundSAMLMessage().getID());
+    }
+
+    /**
+     * Creates a HERAS-AF XACML request from a SAML authorization decision query.
+     * 
+     * @param messageContext current message context
+     * 
+     * @return the XACML request
+     * 
+     * @throws AuthorizationServiceException thrown if there is a problem converting the incoming message XML in to a
+     *             XACML request
+     */
+    protected RequestType getXacmlRequest(AuthzRequestMessageContext messageContext)
+            throws AuthorizationServiceException {
+        XACMLAuthzDecisionQueryType authzRequest = messageContext.getInboundSAMLMessage();
+        try {
+            Unmarshaller unmarshaller = ContextAndPolicy.getUnmarshaller(ContextAndPolicy.JAXBProfile.REQUEST_CTX);
+            return (RequestType) unmarshaller.unmarshal(authzRequest.getRequest().getDOM());
+        } catch (JAXBException e) {
+            log.error("Unable to convert SAML/XACML authorization request into HERASAF request context", e);
+            throw new AuthorizationServiceException("Invalid request message.", e);
+        }
+    }
+
+    /**
+     * Creates the SAML response given the decision reached by the PDP.
+     * 
+     * @param messageContext current message context
+     * @param herasDecision decision reached by the PDP
+     * @param statusCodeValue status code for the decision
+     * 
+     * @return the created SAML response
+     * 
+     * @throws AuthorizationServiceException thrown if there a problem creating the SAML response
+     */
+    protected Response buildSAMLResponse(AuthzRequestMessageContext messageContext, DecisionType herasDecision,
+            String statusCodeValue) throws AuthorizationServiceException {
+
+        XACMLAuthzDecisionStatementType authzStatement = XACMLUtil.buildAuthZDecisionStatement(XACMLUtil
+                .buildRequest(messageContext.getInboundSAMLMessage()), XACMLUtil.buildResponse(XACMLUtil
+                .buildStatus(statusCodeValue), DECISION.valueOf(herasDecision.toString())));
+
+        Assertion samlAssertion = SAMLUtil.buildAssertion(pdpConfig.getEntityId(), messageContext
+                .getOutboundSAMLMessageIssueInstant(), authzStatement);
+        return SAMLUtil.buildSAMLResponse(messageContext.getInboundSAMLMessageId(), messageContext
+                .getOutboundSAMLMessageIssueInstant(), samlAssertion, SAMLUtil
+                .buildStatus(StatusCode.SUCCESS_URI, null));
+    }
+
+    /** Message context for {@link XACMLAuthzDecisionQueryType} requests. */
+    private static class AuthzRequestMessageContext extends
+            BasicSAMLMessageContext<XACMLAuthzDecisionQueryType, Response, NameID> {
+
+    }
+}

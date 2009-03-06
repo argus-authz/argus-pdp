@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+    
+    <!--
+        Loggers define indicate which packages/categories are logged, at which level, and to which appender.
+        Levels: OFF, ERROR, WARN, INFO, DEBUG, TRACE, ALL
+    -->
+    <!-- Logs IdP, but not OpenSAML, messages -->
+    <logger name="org.glite">
+        <level value="INFO" />
+    </logger>
+
+    <!-- Logs OpenSAML, but not IdP, messages -->
+    <logger name="org.opensaml">
+        <level value="WARN" />
+    </logger>
+    
+    <!-- 
+        Normally you should not edit below this point.  These default configurations are sufficient for 
+        almost every system.
+    -->
+
+    <!-- 
+        Logging appenders define where and how logging messages are logged.
+     -->
+    <appender name="PDP_ACCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${org.glite.authz.pdp.home}/logs/pdp-access.log</File>
+        <ImmediateFlush>true</ImmediateFlush>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${org.glite.authz.pdp.home}/logs/pdp-access-%d{yyyy-MM-dd}.log</FileNamePattern>
+        </rollingPolicy>
+
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%msg%n</Pattern>
+        </layout>
+    </appender>
+
+    <appender name="PDP_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${org.glite.authz.pdp.home}/logs/pdp-audit.log</File>
+        <ImmediateFlush>true</ImmediateFlush>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${org.glite.authz.pdp.home}/logs/pdp-audit-%d{yyyy-MM-dd}.log</FileNamePattern>
+        </rollingPolicy>
+
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%msg%n</Pattern>
+        </layout>
+    </appender>
+
+    <appender name="PDP_PROCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${org.glite.authz.pdp.home}/logs/pdp-process.log</File>
+        <!-- Uncomment this if application is terminating in such as way that the last few log messages are not written to disk -->
+        <!--
+        <ImmediateFlush>true</ImmediateFlush>
+        -->
+        
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${org.glite.authz.pdp.home}/logs/pdp-process-%d{yyyy-MM-dd}.log</FileNamePattern>
+        </rollingPolicy>
+
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <!-- General logging pattern -->
+            <Pattern>%date{HH:mm:ss.SSS} - %level [%logger:%line] - %msg%n</Pattern>
+            
+            <!-- 
+                Two MDC variables are available for authenticated users: 'idpSessionID' and 'principalName'. 
+                You may include these the data in the logging pattern by means of %mdc{NAME}
+                You may include the thread ID by means of %t
+            -->
+            <!-- Example logging pattern using thread ID and principal name -->
+            <!--
+            <Pattern>%date{HH:mm:ss.SSS} - %level [%logger:%line] - [%t:%mdc{principalName}] - %msg%n</Pattern>
+             -->
+            
+        </layout>
+    </appender>
+  
+    <logger name="PDP-Access">
+        <level value="ALL" />
+        <appender-ref ref="PDP_ACCESS" />
+    </logger>
+    
+    <logger name="PDP-Audit">
+        <level value="ALL" />
+        <appender-ref ref="PDP_AUDIT" />
+    </logger>   
+
+    <root>
+        <level value="ERROR" />
+        <appender-ref ref="PDP_PROCESS" />
+    </root>
+
+</configuration>
