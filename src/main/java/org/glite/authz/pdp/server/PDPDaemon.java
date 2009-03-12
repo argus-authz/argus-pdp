@@ -83,14 +83,18 @@ public class PDPDaemon {
         PDPConfiguration daemonConfig = parseConfiguration(args[0]);
 
         Server pepDaemonService = createDaemonService(daemonConfig);
-        JettyRunThread pepDaemonServiceThread = new JettyRunThread(pepDaemonService);
-        pepDaemonServiceThread.setName("PDP Deamon Service");
+        JettyRunThread pdpDaemonServiceThread = new JettyRunThread(pepDaemonService);
+        pdpDaemonServiceThread.setName("PDP Deamon Service");
         shutdownCommands.add(new JettyShutdownCommand(pepDaemonService));
         
-        JettyShutdownService.startJettyShutdownService(daemonConfig.getShutdownPort(), shutdownCommands);
+        if(daemonConfig.getShutdownPort() == 0){
+            JettyShutdownService.startJettyShutdownService(8153, shutdownCommands);
+        }else{
+            JettyShutdownService.startJettyShutdownService(daemonConfig.getShutdownPort(), shutdownCommands);
+        }
 
         Log.info("PDP service initialized");
-        pepDaemonServiceThread.start();
+        pdpDaemonServiceThread.start();
     }
 
     private static Server createDaemonService(PDPConfiguration daemonConfig) {
@@ -109,7 +113,11 @@ public class PDPDaemon {
 
         SelectChannelConnector connector = new SelectChannelConnector();
         connector.setHost(daemonConfig.getHostname());
-        connector.setPort(daemonConfig.getPort());
+        if(daemonConfig.getPort() == 0){
+            connector.setPort(8152);
+        }else{
+            connector.setPort(daemonConfig.getPort());
+        }
         connector.setMaxIdleTime(daemonConfig.getConnectionTimeout());
         connector.setRequestBufferSize(daemonConfig.getReceiveBufferSize());
         connector.setResponseBufferSize(daemonConfig.getSendBufferSize());

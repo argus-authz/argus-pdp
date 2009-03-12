@@ -64,17 +64,6 @@
         <layout class="ch.qos.logback.classic.PatternLayout">
             <!-- General logging pattern -->
             <Pattern>%date{HH:mm:ss.SSS} - %level [%logger:%line] - %msg%n</Pattern>
-            
-            <!-- 
-                Two MDC variables are available for authenticated users: 'idpSessionID' and 'principalName'. 
-                You may include these the data in the logging pattern by means of %mdc{NAME}
-                You may include the thread ID by means of %t
-            -->
-            <!-- Example logging pattern using thread ID and principal name -->
-            <!--
-            <Pattern>%date{HH:mm:ss.SSS} - %level [%logger:%line] - [%t:%mdc{principalName}] - %msg%n</Pattern>
-             -->
-            
         </layout>
     </appender>
   

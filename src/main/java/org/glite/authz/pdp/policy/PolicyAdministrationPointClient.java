@@ -110,8 +110,8 @@ public class PolicyAdministrationPointClient {
     public PolicySetType retrievePolicySet() throws AuthorizationServiceException {
         SOAPMessageContext messageContext = buildMessageContext();
         Envelope soapResponse = null;
-        SOAPClient soapClient = pdpConfig.getSoapClient();
-        for (String pap : pdpConfig.getPolicyAdministrationPoints()) {
+        SOAPClient soapClient = pdpConfig.getSOAPClient();
+        for (String pap : pdpConfig.getPAPEndpointss()) {
             try {
                 soapClient.send(pap, messageContext);
                 if (messageContext.getInboundMessage() != null) {

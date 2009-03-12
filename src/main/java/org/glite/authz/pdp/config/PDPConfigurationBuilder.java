@@ -21,32 +21,15 @@ import java.util.List;
 
 import net.jcip.annotations.NotThreadSafe;
 
-import org.glite.authz.common.config.AbstractConfigurationBuilder;
-import org.glite.authz.common.util.Strings;
+import org.glite.authz.common.config.AbstractServiceConfigurationBuilder;
 import org.opensaml.ws.security.SecurityPolicy;
-import org.opensaml.ws.soap.client.SOAPClient;
 
 /** A builder of {@link PDPConfiguration}s. */
 @NotThreadSafe
-public class PDPConfigurationBuilder extends AbstractConfigurationBuilder<PDPConfiguration> {
+public class PDPConfigurationBuilder extends AbstractServiceConfigurationBuilder<PDPConfiguration> {
 
-    /** EntitID of the PEP daemon. */
-    private String entityId;
-
-    /** Hostname or IP address upon which the daemon will listen. */
-    private String hostname;
-
-    /** Port upon which the daemon will listen. */
-    private int port;
-    
-    /** Port number upon which the PDP shutdown service listens. */
-    private int shutdownPort;
-
-    /** Max number of requests the daemon will enqueue. */
-    private int maxRequestQueueSize;
-    
     /** Registered policy administration point endpoints. */
-    private List<String> policyAdministrationPoints;
+    private List<String> papEndpoints;
 
     /** Length of time, in minutes, a policy will be cached. */
     private int policyRetentionInterval;
@@ -54,37 +37,24 @@ public class PDPConfigurationBuilder extends AbstractConfigurationBuilder<PDPCon
     /** The ID of the policy set used by this PDP. */
     private String policySetId;
 
-    /** SOAP client used by the daemon to communicate with PDPs. */
-    private SOAPClient soapClient;
-
     /** Message security policy used on {@link org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType} messages. */
     private SecurityPolicy authzDecisionQuerySecurityPolicy;
 
     /** Constrcutor. */
     public PDPConfigurationBuilder() {
         super();
-        hostname = "0.0.0.0";
-        port = 8080;
-        shutdownPort = 8081;
-        maxRequestQueueSize = 500;
-        policyAdministrationPoints = new ArrayList<String>();
+        papEndpoints = new ArrayList<String>();
         policyRetentionInterval = 60 * 4;
         policySetId = "-1";
     }
-    
-    public PDPConfigurationBuilder(PDPConfiguration prototype){
+
+    public PDPConfigurationBuilder(PDPConfiguration prototype) {
         super(prototype);
-        entityId = prototype.getEntityId();
-        hostname = prototype.getHostname();
-        port = prototype.getPort();
-        shutdownPort = prototype.getShutdownPort();
-        maxRequestQueueSize = prototype.getMaxRequestQueueSize();
-        policyAdministrationPoints = prototype.getPolicyAdministrationPoints();
+        papEndpoints = prototype.getPAPEndpointss();
         policyRetentionInterval = prototype.getPolicyRetentionInterval();
         policySetId = prototype.getPolicySetId();
-        soapClient = prototype.getSoapClient();
     }
-    
+
     /**
      * Builds a {@link PDPConfiguration} with the current settings of this builder.
      * 
@@ -93,18 +63,12 @@ public class PDPConfigurationBuilder extends AbstractConfigurationBuilder<PDPCon
     public PDPConfiguration build() {
         PDPConfiguration config = new PDPConfiguration();
         populateConfiguration(config);
-        config.setEntityId(entityId);
-        config.setHostname(hostname);
-        config.setPort(port);
-        config.setShutdownPort(shutdownPort);
-        config.setMaxRequestQueueSize(maxRequestQueueSize);
-        config.setPolicyAdministrationPoints(policyAdministrationPoints);
+        config.setPAPEndpoints(papEndpoints);
         config.setPolicyRetentionInterval(policyRetentionInterval);
         config.setPolicySetId(policySetId);
-        config.setSoapClient(soapClient);
         return config;
     }
-    
+
     /**
      * Gets the message security policy used for {@link org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType}
      * messages.
@@ -114,41 +78,14 @@ public class PDPConfigurationBuilder extends AbstractConfigurationBuilder<PDPCon
     public SecurityPolicy getAuthzDecisionQuerySecurityPolicy() {
         return authzDecisionQuerySecurityPolicy;
     }
-    
-    /**
-     * Gets the Entity ID of the PEP daemon.
-     * 
-     * @return entity ID of the PEP daemon
-     */
-    public String getEntityId() {
-        return entityId;
-    }
-    
-    /**
-     * Gets the host to which the PEP daemon will bind.
-     * 
-     * @return host to which the PEP daemon will bind
-     */
-    public String getHost() {
-        return hostname;
-    }
-
-    /**
-     * Gets the max number of requests the daemon will enqueue.
-     * 
-     * @return max number of requests the daemon will enqueue
-     */
-    public int getMaxRequestQueueSize() {
-        return maxRequestQueueSize;
-    }
 
     /**
      * Gets the registered policy administration point endpoint URLs.
      * 
      * @return registered policy administration point endpoint URLs
      */
-    public List<String> getPolicyAdministrationPoints() {
-        return policyAdministrationPoints;
+    public List<String> getPAPEndpoints() {
+        return papEndpoints;
     }
 
     /**
@@ -170,33 +107,6 @@ public class PDPConfigurationBuilder extends AbstractConfigurationBuilder<PDPCon
     }
 
     /**
-     * Gets the port upon which the daemon will listen.
-     * 
-     * @return port upon which the daemon will listen
-     */
-    public int getPort() {
-        return port;
-    }
-
-    /**
-     * Gets the port number upon which the PDP shutdown service listens.
-     * 
-     * @return port number upon which the PDP shutdown service listens
-     */
-    public int getShutdownPort() {
-        return shutdownPort;
-    }
-
-    /**
-     * Gets the SOAP client used by the daemon to communicate with PDPs.
-     * 
-     * @return SOAP client used by the daemon to communicate with PDPs
-     */
-    public SOAPClient getSOAPClient() {
-        return soapClient;
-    }
-    
-    /**
      * Sets the message security policy used for {@link org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType}
      * messages.
      * 
@@ -204,36 +114,6 @@ public class PDPConfigurationBuilder extends AbstractConfigurationBuilder<PDPCon
      */
     public void setAuthzDecisionQuerySecurityPolicy(SecurityPolicy policy) {
         authzDecisionQuerySecurityPolicy = policy;
-    }
-    
-    /**
-     * Sets the Entity ID of the PEP daemon.
-     * 
-     * @param id Entity ID of the PEP daemon
-     */
-    public void setEntityId(String id) {
-        entityId = Strings.safeTrimOrNullString(id);
-    }
-
-    /**
-     * Sets the hostname or IP address upon which the daemon will listen.
-     * 
-     * @param newHost hostname or IP address upon which the daemon will listen
-     */
-    public void setHost(String newHost) {
-        if (Strings.isEmpty(newHost)) {
-            throw new IllegalArgumentException("Host may not be null or empty");
-        }
-        hostname = newHost;
-    }
-
-    /**
-     * Sets the max number of requests the daemon will enqueue.
-     * 
-     * @param max max number of requests the daemon will enqueue
-     */
-    public void setMaxRequestQueueSize(int max) {
-        maxRequestQueueSize = max;
     }
 
     /**
@@ -252,35 +132,5 @@ public class PDPConfigurationBuilder extends AbstractConfigurationBuilder<PDPCon
      */
     public void setPolicySetId(String id) {
         policySetId = id;
-    }
-
-    /**
-     * Sets the port upon which the daemon will listen.
-     * 
-     * @param newPort port upon which the daemon will listen
-     */
-    public void setPort(int newPort) {
-        port = newPort;
-    }
-
-    /**
-     * Sets the port number upon which the PDP shutdown service listens.
-     * 
-     * @param port port number upon which the PDP shutdown service listens
-     */
-    public void setShutdownPort(int port) {
-        shutdownPort = port;
-    }
-
-    /**
-     * Sets the SOAP client used by the daemon to communicate with PDPs.
-     * 
-     * @param client SOAP client used by the daemon to communicate with PDPs
-     */
-    public void setSoapClient(SOAPClient client) {
-        if (client == null) {
-            throw new IllegalArgumentException("SOAP client may not be null");
-        }
-        soapClient = client;
     }
 }

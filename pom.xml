@@ -173,9 +173,6 @@
                     <doctitle>${project.name} ${project.version} Java API.</doctitle>
                     <windowtitle>${project.name} ${project.version} Java API.</windowtitle>
                     <overview>src/main/java/overview.html</overview>
-                    <excludePackageNames>
-                        org.dtools.ini:org.glite.authz.pep.server:org.glite.authz.common:org.glite.authz.pep.client.impl
-                    </excludePackageNames>
                 </configuration>
             </plugin>
             <plugin>
