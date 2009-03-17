@@ -173,7 +173,8 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
             log.debug("Decoding incomming message");
             messageDecoder.decode(messageContext);
             if (messageLog.isDebugEnabled()) {
-                messageLog.debug(XMLHelper.nodeToString(messageContext.getInboundMessage().getDOM()));
+                messageLog.debug("Incomming SOAP message\n{}", XMLHelper.prettyPrintXML(messageContext
+                        .getInboundMessage().getDOM()));
             }
         } catch (MessageDecodingException e) {
             throw new AuthorizationServiceException("Unable to decode incoming request", e);
@@ -200,6 +201,10 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         log.debug("Encoding response");
         try {
             messageEncoder.encode(messageContext);
+            if (messageLog.isDebugEnabled()) {
+                messageLog.debug("SOAP response\n{}", XMLHelper.prettyPrintXML(messageContext.getOutboundMessage()
+                        .getDOM()));
+            }
             // TODO audit log
         } catch (MessageEncodingException e) {
             log.error("Unable to encoding response.", e);

@@ -82,7 +82,7 @@ public class PolicyRepository {
             log.info("Refreshing authorization policy from remote PAPs");
             org.opensaml.xacml.policy.PolicySetType policySetOM = papClient.retrievePolicySet();
             if (policySetOM != null) {
-                policyLogger.debug("Retrieved XACML policy\n{}", XMLHelper.nodeToString(policySetOM.getDOM()));
+                policyLogger.debug("Retrieved XACML policy\n{}", XMLHelper.prettyPrintXML(policySetOM.getDOM()));
                 policySet = (PolicySetType) PolicyConverter.unmarshal(policySetOM.getDOM());
             }
         } catch (Exception e) {
