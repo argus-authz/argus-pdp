@@ -4,6 +4,7 @@
 
 # PDP home directory
 HOME="$(cd "${0%/*}/.." && pwd)"
+CONF="$HOME/conf/pdp.ini"
 
 # Source our environment setup script
 . $HOME/bin/env.sh
@@ -13,11 +14,16 @@ function start {
     JVMOPTS="-Dorg.glite.authz.pdp.home=$HOME $JVMOPTS"
     
     # Run the PDP
-    $JAVACMD $JVMOPTS 'org.glite.authz.pdp.server.PDPDaemon' $HOME/conf/pdp.ini &
+    $JAVACMD $JVMOPTS 'org.glite.authz.pdp.server.PDPDaemon' $CONF &
 }
 
 function stop {
-    curl --connect-timeout 3 --max-time 5 -s --show-error http://127.0.0.1:8153/shutdown
+    SPORT=`grep shutdownPort $CONF | sed 's/ //g' | awk 'BEGIN {FS="="}{print $2}'`
+    if [ -z "$SPORT" ]; then
+      SPORT=8153
+    fi
+    
+    curl --connect-timeout 3 --max-time 5 -s --show-error http://127.0.0.1:$SPORT/shutdown
     ECODE=$?
     if [ "$ECODE" != 0 ] ; then
        echo "Shutdown failed.  curl returned error code of" $ECODE

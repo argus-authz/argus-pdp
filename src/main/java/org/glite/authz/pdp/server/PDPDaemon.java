@@ -27,10 +27,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.glite.authz.common.config.ConfigurationException;
-import org.glite.authz.common.config.LoggingReloadTask;
 import org.glite.authz.common.http.JettyRunThread;
 import org.glite.authz.common.http.JettyShutdownCommand;
 import org.glite.authz.common.http.JettyShutdownService;
+import org.glite.authz.common.logging.LoggingReloadTask;
 import org.glite.authz.common.util.Files;
 import org.glite.authz.pdp.config.PDPConfiguration;
 import org.glite.authz.pdp.config.PDPIniConfigurationParser;
@@ -70,19 +70,19 @@ public class PDPDaemon {
         
         ArrayList<Runnable> shutdownCommands = new ArrayList<Runnable>();
 
-        final Timer configFileReloadTasks = new Timer(true);
+        final Timer taskTimer = new Timer(true);
         shutdownCommands.add(new Runnable() {
             public void run() {
-                configFileReloadTasks.cancel();
+                taskTimer.cancel();
             }
         });
-        initializeLogging(System.getProperty(PDP_HOME_PROP) + "/conf/logging.xml", configFileReloadTasks);
+        initializeLogging(System.getProperty(PDP_HOME_PROP) + "/conf/logging.xml", taskTimer);
 
         DefaultBootstrap.bootstrap();
         
         PDPConfiguration daemonConfig = parseConfiguration(args[0]);
 
-        Server pepDaemonService = createDaemonService(daemonConfig);
+        Server pepDaemonService = createDaemonService(daemonConfig, taskTimer);
         JettyRunThread pdpDaemonServiceThread = new JettyRunThread(pepDaemonService);
         pdpDaemonServiceThread.setName("PDP Deamon Service");
         shutdownCommands.add(new JettyShutdownCommand(pepDaemonService));
@@ -97,7 +97,7 @@ public class PDPDaemon {
         pdpDaemonServiceThread.start();
     }
 
-    private static Server createDaemonService(PDPConfiguration daemonConfig) {
+    private static Server createDaemonService(PDPConfiguration daemonConfig, Timer taskTimer) {
         Server httpServer = new Server();
         httpServer.setSendServerVersion(false);
         httpServer.setSendDateHeader(false);
@@ -126,6 +126,7 @@ public class PDPDaemon {
         Context servletContext = new Context(httpServer, "/", false, false);
         servletContext.setDisplayName("PDP Daemon");
         servletContext.setAttribute(PDPConfiguration.BINDING_NAME, daemonConfig);
+        servletContext.setAttribute(AuthorizationRequestServlet.TIMER_ATTRIB, taskTimer);
 
         ServletHolder daemonRequestServlet = new ServletHolder(new AuthorizationRequestServlet());
         daemonRequestServlet.setName("PDP Daemon Servlet");

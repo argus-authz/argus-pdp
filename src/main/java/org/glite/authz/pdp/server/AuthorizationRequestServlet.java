@@ -17,6 +17,7 @@
 package org.glite.authz.pdp.server;
 
 import java.io.IOException;
+import java.util.Timer;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -27,11 +28,12 @@ import javax.xml.bind.Unmarshaller;
 
 import org.glite.authz.common.AuthorizationServiceException;
 import org.glite.authz.common.http.BaseHttpServlet;
+import org.glite.authz.common.logging.AccessLogEntry;
+import org.glite.authz.common.logging.LoggingConstants;
 import org.glite.authz.pdp.config.PDPConfiguration;
 import org.glite.authz.pdp.policy.PolicyRepository;
 import org.herasaf.xacml.core.combiningAlgorithm.CombiningAlgorithm;
 import org.herasaf.xacml.core.context.RequestInformation;
-import org.herasaf.xacml.core.context.RequestInformationFactory;
 import org.herasaf.xacml.core.context.impl.DecisionType;
 import org.herasaf.xacml.core.context.impl.RequestType;
 import org.herasaf.xacml.core.policy.impl.PolicySetType;
@@ -56,17 +58,36 @@ import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType;
 import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionStatementType;
 import org.opensaml.xml.parse.BasicParserPool;
 import org.opensaml.xml.security.SecurityException;
+import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** PDP Servlet. */
 public class AuthorizationRequestServlet extends BaseHttpServlet {
 
+    /** Name of the servlet context attribute where this servlet expects to find a {@link Timer}. */
+    public static final String TIMER_ATTRIB = "org.glite.authz.pdp.server.timmer";
+
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(AuthorizationRequestServlet.class);
 
+    /** Access log. */
+    private final Logger accessLog = LoggerFactory.getLogger(LoggingConstants.ACCESS_CATEGORY);
+
+    /** Audit log. */
+    private final Logger auditLog = LoggerFactory.getLogger(LoggingConstants.AUDIT_CATEGORY);
+
+    /** Protocol message log. */
+    private final Logger messageLog = LoggerFactory.getLogger(LoggingConstants.MESSAGE_CATEGORY);
+
+    /** Policy log. */
+    private final Logger policyLogger = LoggerFactory.getLogger(LoggingConstants.PROTOCOL_MESSAGE_CATEGORY);
+
     /** PDP configuration. */
     private PDPConfiguration pdpConfig;
+
+    /** Timer that may be used for scheduling background tasks. */
+    private Timer taskTimer;
 
     /** Resolver used to get the security policy for incoming messages. */
     private SecurityPolicyResolver messageSecurityPolicyResolver;
@@ -76,9 +97,6 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
 
     /** The encoder used to write outgoing messages. */
     private HTTPSOAP11Encoder messageEncoder;
-
-    /** Factory used to create HEARSAF request information objects. */
-    private RequestInformationFactory reqInfoFactory;
 
     /** Repository of XACML policies. */
     private PolicyRepository policyRepo;
@@ -92,6 +110,11 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
             throw new ServletException("Unable to initialize, no configuration available in servlet context");
         }
 
+        taskTimer = (Timer) getServletContext().getAttribute(TIMER_ATTRIB);
+        if (taskTimer == null) {
+            throw new ServletException("Unable to initialize, no Timer available in servlet context");
+        }
+
         messageSecurityPolicyResolver = new StaticSecurityPolicyResolver(pdpConfig
                 .getAuthzDecisionQuerySecurityPolicy());
 
@@ -102,31 +125,27 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
 
         messageEncoder = new HTTPSOAP11Encoder();
 
-        reqInfoFactory = new RequestInformationFactory();
-
-        policyRepo = new PolicyRepository(pdpConfig);
+        policyRepo = new PolicyRepository(pdpConfig, taskTimer);
     }
 
     /** {@inheritDoc} */
     protected void doPost(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException,
             IOException {
+        accessLog.debug(new AccessLogEntry(httpRequest).toString());
+
+        AuthzRequestMessageContext messageContext = new AuthzRequestMessageContext();
+
+        Response samlResponse;
         try {
-            AuthzRequestMessageContext messageContext = createMessageContext(httpRequest, httpResponse);
-            messageDecoder.decode(messageContext);
-            evaluateRequest(messageContext);
-            messageEncoder.encode(messageContext);
-        } catch (MessageDecodingException e) {
-            log.error("Unable to decode incoming request", e);
-
-        } catch (SecurityException e) {
-            log.error("Incoming request does not meeting security requirements", e);
-
+            decodeMessage(messageContext, httpRequest, httpResponse);
+            samlResponse = evaluateRequest(messageContext);
         } catch (AuthorizationServiceException e) {
             log.error("Error processing authorization request.", e);
-
-        } catch (MessageEncodingException e) {
-            log.error("Error encoding response.", e);
+            samlResponse = buildSAMLResponse(messageContext, DecisionType.INDETERMINATE,
+                    StatusCodeType.SC_PROCESSING_ERROR);
         }
+
+        encodeMessage(messageContext, samlResponse, httpRequest, httpResponse);
     }
 
     /** {@inheritDoc} */
@@ -135,22 +154,56 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
     }
 
     /**
-     * Creates a message context from the incoming request and outgoing response.
+     * Decodes a message in to the given message context.
      * 
-     * @param httpRequest incoming request
-     * @param httpResponse outgoing response
+     * @param messageContext message context into which the decoded information should be added.
+     * @param httpRequest incoming HTTP request
+     * @param httpResponse outgoing HTTP response
      * 
-     * @return the generated message context
+     * @throws AuthorizationServiceException thrown if there is a problem decoding message
      */
-    protected AuthzRequestMessageContext createMessageContext(HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
-        AuthzRequestMessageContext msgCtx = new AuthzRequestMessageContext();
+    protected void decodeMessage(AuthzRequestMessageContext messageContext, HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) throws AuthorizationServiceException {
+        messageContext.setInboundMessageTransport(new HttpServletRequestAdapter(httpRequest));
+        messageContext
+                .setOutboundMessageTransport(new HttpServletResponseAdapter(httpResponse, httpRequest.isSecure()));
+        messageContext.setSecurityPolicyResolver(messageSecurityPolicyResolver);
 
-        msgCtx.setInboundMessageTransport(new HttpServletRequestAdapter(httpRequest));
-        msgCtx.setOutboundMessageTransport(new HttpServletResponseAdapter(httpResponse, httpRequest.isSecure()));
-        msgCtx.setSecurityPolicyResolver(messageSecurityPolicyResolver);
+        try {
+            log.debug("Decoding incomming message");
+            messageDecoder.decode(messageContext);
+            if (messageLog.isDebugEnabled()) {
+                messageLog.debug(XMLHelper.nodeToString(messageContext.getInboundMessage().getDOM()));
+            }
+        } catch (MessageDecodingException e) {
+            throw new AuthorizationServiceException("Unable to decode incoming request", e);
+        } catch (SecurityException e) {
+            throw new AuthorizationServiceException("Incoming request does not meeting security requirements", e);
+        }
+    }
 
-        return msgCtx;
+    /**
+     * Encodes an outgoing response.
+     * 
+     * @param messageContext message context for the current message
+     * @param samlResponse response to encode
+     * @param httpRequest incoming HTTP request
+     * @param httpResponse outgoing HTTP response
+     */
+    protected void encodeMessage(AuthzRequestMessageContext messageContext, Response samlResponse,
+            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        messageContext.setOutboundSAMLMessageIssueInstant(new DateTime());
+        messageContext.setOutboundMessageIssuer(pdpConfig.getEntityId());
+        messageContext.setOutboundSAMLMessage(samlResponse);
+        messageContext.setOutboundSAMLMessageId(messageContext.getOutboundSAMLMessage().getID());
+
+        log.debug("Encoding response");
+        try {
+            messageEncoder.encode(messageContext);
+            // TODO audit log
+        } catch (MessageEncodingException e) {
+            log.error("Unable to encoding response.", e);
+        }
     }
 
     /**
@@ -160,17 +213,25 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
      * 
      * @throws AuthorizationServiceException thrown if there is a problem evaluating the authorization decision request
      */
-    protected void evaluateRequest(AuthzRequestMessageContext messageContext) throws AuthorizationServiceException {
+    protected Response evaluateRequest(AuthzRequestMessageContext messageContext) throws AuthorizationServiceException {
         PolicySetType policy = policyRepo.getPolicy();
-        RequestInformation reqInfo = reqInfoFactory.createRequestInformation(null, null);
 
-        CombiningAlgorithm combiningAlgo = policy.getCombiningAlg();
-        DecisionType decision = combiningAlgo.evaluate(getXacmlRequest(messageContext), policy, reqInfo);
+        if (policy == null) {
+            throw new AuthorizationServiceException(
+                    "No policy available by which the incomming request may be evaluated");
+        }
 
-        messageContext.setOutboundSAMLMessageIssueInstant(new DateTime());
-        messageContext.setOutboundMessageIssuer(pdpConfig.getEntityId());
-        messageContext.setOutboundSAMLMessage(buildSAMLResponse(messageContext, decision, StatusCodeType.SC_OK));
-        messageContext.setOutboundSAMLMessageId(messageContext.getOutboundSAMLMessage().getID());
+        // TODO log policy
+        try {
+            log.debug("Evaluating request against authorization policy");
+            RequestInformation reqInfo = new RequestInformation(null, null);
+            CombiningAlgorithm combiningAlgo = policy.getCombiningAlg();
+            DecisionType decision = combiningAlgo.evaluate(getXacmlRequest(messageContext), policy, reqInfo);
+            log.debug("A decision of {} was reached for the authorization request", decision.toString());
+            return buildSAMLResponse(messageContext, decision, StatusCodeType.SC_OK);
+        } catch (Exception e) {
+            throw new AuthorizationServiceException("Unable to create XACML response", e);
+        }
     }
 
     /**
@@ -203,15 +264,24 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
      * @param statusCodeValue status code for the decision
      * 
      * @return the created SAML response
-     * 
-     * @throws AuthorizationServiceException thrown if there a problem creating the SAML response
      */
     protected Response buildSAMLResponse(AuthzRequestMessageContext messageContext, DecisionType herasDecision,
-            String statusCodeValue) throws AuthorizationServiceException {
+            String statusCodeValue) {
+
+        DECISION decision;
+        if (herasDecision == DecisionType.DENY) {
+            decision = DECISION.Deny;
+        } else if (herasDecision == DecisionType.PERMIT) {
+            decision = DECISION.Permit;
+        } else if (herasDecision == DecisionType.NOT_APPLICABLE) {
+            decision = DECISION.NotApplicable;
+        } else {
+            decision = DECISION.Indeterminate;
+        }
 
         XACMLAuthzDecisionStatementType authzStatement = XACMLUtil.buildAuthZDecisionStatement(XACMLUtil
                 .buildRequest(messageContext.getInboundSAMLMessage()), XACMLUtil.buildResponse(XACMLUtil
-                .buildStatus(statusCodeValue), DECISION.valueOf(herasDecision.toString())));
+                .buildStatus(statusCodeValue), decision));
 
         Assertion samlAssertion = SAMLUtil.buildAssertion(pdpConfig.getEntityId(), messageContext
                 .getOutboundSAMLMessageIssueInstant(), authzStatement);

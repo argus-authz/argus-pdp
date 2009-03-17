@@ -52,7 +52,7 @@ public class SAMLUtil {
     public static Response buildSAMLResponse(String inResponseTo, DateTime issueInstant, Assertion assertion,
             Status status) {
         SAMLObjectBuilder<Response> samlResponseBuilder = (SAMLObjectBuilder<Response>) Configuration
-                .getBuilderFactory().getBuilder(Response.TYPE_NAME);
+                .getBuilderFactory().getBuilder(Response.DEFAULT_ELEMENT_NAME);
         Response samlResponse = samlResponseBuilder.buildObject();
         samlResponse.setID(idgen.generateIdentifier());
         samlResponse.setInResponseTo(inResponseTo);
@@ -76,7 +76,7 @@ public class SAMLUtil {
     public static Assertion buildAssertion(String issuerEntityId, DateTime issueInstant,
             XACMLAuthzDecisionStatementType authzDecisionStatement) {
         SAMLObjectBuilder<Assertion> assertionBuilder = (SAMLObjectBuilder<Assertion>) Configuration
-                .getBuilderFactory().getBuilder(Assertion.TYPE_NAME);
+                .getBuilderFactory().getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
 
         Assertion assertion = assertionBuilder.buildObject();
         assertion.setID(idgen.generateIdentifier());
@@ -96,7 +96,7 @@ public class SAMLUtil {
     @SuppressWarnings("unchecked")
     public static Issuer buildIssuer(String entityId) {
         SAMLObjectBuilder<Issuer> issuerBuilder = (SAMLObjectBuilder<Issuer>) Configuration.getBuilderFactory()
-                .getBuilder(Issuer.TYPE_NAME);
+                .getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
         Issuer issuer = issuerBuilder.buildObject();
         issuer.setFormat(Issuer.ENTITY);
         issuer.setValue(entityId);
@@ -114,7 +114,7 @@ public class SAMLUtil {
     @SuppressWarnings("unchecked")
     public static Status buildStatus(String statusCodeValue, String statusMessageValue) {
         SAMLObjectBuilder<StatusCode> statusCodeBuilder = (SAMLObjectBuilder<StatusCode>) Configuration
-                .getBuilderFactory().getBuilder(StatusCode.TYPE_NAME);
+                .getBuilderFactory().getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
         StatusCode statusCode = statusCodeBuilder.buildObject();
         statusCode.setValue(statusCodeValue);
 
@@ -127,7 +127,7 @@ public class SAMLUtil {
         }
 
         SAMLObjectBuilder<Status> statusBuilder = (SAMLObjectBuilder<Status>) Configuration.getBuilderFactory()
-                .getBuilder(Status.TYPE_NAME);
+                .getBuilder(Status.DEFAULT_ELEMENT_NAME);
         Status status = statusBuilder.buildObject();
         status.setStatusCode(statusCode);
         status.setStatusMessage(statusMessage);

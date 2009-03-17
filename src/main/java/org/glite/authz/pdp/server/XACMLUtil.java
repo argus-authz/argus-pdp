@@ -17,7 +17,8 @@
 package org.glite.authz.pdp.server;
 
 import org.opensaml.Configuration;
-import org.opensaml.saml1.core.AuthorizationDecisionStatement;
+import org.opensaml.common.SAMLObjectBuilder;
+import org.opensaml.saml2.core.Statement;
 import org.opensaml.xacml.XACMLObjectBuilder;
 import org.opensaml.xacml.ctx.DecisionType;
 import org.opensaml.xacml.ctx.RequestType;
@@ -53,9 +54,10 @@ public class XACMLUtil {
     @SuppressWarnings("unchecked")
     public static XACMLAuthzDecisionStatementType buildAuthZDecisionStatement(RequestType authzRequest,
             ResponseType authzResponse) {
-        XACMLObjectBuilder<XACMLAuthzDecisionStatementType> authzStatementBuilder = (XACMLObjectBuilder<XACMLAuthzDecisionStatementType>) Configuration
-                .getBuilderFactory().getBuilder(AuthorizationDecisionStatement.TYPE_NAME);
-        XACMLAuthzDecisionStatementType authzStatement = authzStatementBuilder.buildObject();
+        SAMLObjectBuilder<XACMLAuthzDecisionStatementType> authzStatementBuilder = (SAMLObjectBuilder<XACMLAuthzDecisionStatementType>) Configuration
+                .getBuilderFactory().getBuilder(XACMLAuthzDecisionStatementType.TYPE_NAME_XACML20);
+        XACMLAuthzDecisionStatementType authzStatement = authzStatementBuilder.buildObject(
+                Statement.DEFAULT_ELEMENT_NAME, XACMLAuthzDecisionStatementType.TYPE_NAME_XACML20);
         authzStatement.setRequest(authzRequest);
         authzStatement.setResponse(authzResponse);
         return authzStatement;
@@ -106,13 +108,13 @@ public class XACMLUtil {
     @SuppressWarnings("unchecked")
     public static ResponseType buildResponse(StatusType status, DECISION decision) {
         XACMLObjectBuilder<DecisionType> decisionBuilder = (XACMLObjectBuilder<DecisionType>) Configuration
-                .getBuilderFactory().getBuilder(org.opensaml.xacml.ctx.DecisionType.TYPE_NAME);
+                .getBuilderFactory().getBuilder(org.opensaml.xacml.ctx.DecisionType.DEFAULT_ELEMENT_NAME);
 
         DecisionType xacmlDecision = decisionBuilder.buildObject();
         xacmlDecision.setDecision(decision);
 
         XACMLObjectBuilder<ResultType> resultBuilder = (XACMLObjectBuilder<ResultType>) Configuration
-                .getBuilderFactory().getBuilder(ResultType.TYPE_NAME);
+                .getBuilderFactory().getBuilder(ResultType.DEFAULT_ELEMENT_NAME);
         ResultType result = resultBuilder.buildObject();
         result.setDecision(xacmlDecision);
         result.setStatus(status);
@@ -121,7 +123,7 @@ public class XACMLUtil {
         // result.setObligations(obligations);
 
         XACMLObjectBuilder<ResponseType> xacmlResponseBuilder = (XACMLObjectBuilder<ResponseType>) Configuration
-                .getBuilderFactory().getBuilder(ResponseType.TYPE_NAME);
+                .getBuilderFactory().getBuilder(ResponseType.DEFAULT_ELEMENT_NAME);
         ResponseType response = xacmlResponseBuilder.buildObject();
         response.setResult(result);
         return response;
@@ -137,12 +139,12 @@ public class XACMLUtil {
     @SuppressWarnings("unchecked")
     public static StatusType buildStatus(String statusCodeValue) {
         XACMLObjectBuilder<StatusCodeType> statusCodeBuilder = (XACMLObjectBuilder<StatusCodeType>) Configuration
-                .getBuilderFactory().getBuilder(StatusCodeType.TYPE_NAME);
+                .getBuilderFactory().getBuilder(StatusCodeType.DEFAULT_ELEMENT_NAME);
         StatusCodeType statusCode = statusCodeBuilder.buildObject();
         statusCode.setValue(statusCodeValue);
 
         XACMLObjectBuilder<StatusType> statusBuilder = (XACMLObjectBuilder<StatusType>) Configuration
-                .getBuilderFactory().getBuilder(StatusType.TYPE_NAME);
+                .getBuilderFactory().getBuilder(StatusType.DEFAULT_ELEMENT_NAME);
         StatusType status = statusBuilder.buildObject();
         status.setStatusCode(statusCode);
 

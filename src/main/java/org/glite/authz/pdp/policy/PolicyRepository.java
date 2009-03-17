@@ -19,9 +19,11 @@ package org.glite.authz.pdp.policy;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.glite.authz.common.logging.LoggingConstants;
 import org.glite.authz.pdp.config.PDPConfiguration;
 import org.herasaf.xacml.core.policy.PolicyConverter;
 import org.herasaf.xacml.core.policy.impl.PolicySetType;
+import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,9 @@ public class PolicyRepository {
 
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(PolicyRepository.class);
+
+    /** Policy log. */
+    private final Logger policyLogger = LoggerFactory.getLogger(LoggingConstants.PROTOCOL_MESSAGE_CATEGORY);
 
     /** Client used to connect to the remote PAP and retrieve the policy set. */
     private PolicyAdministrationPointClient papClient;
@@ -46,21 +51,20 @@ public class PolicyRepository {
     /**
      * Constructor.
      * 
-     * @param pdpConfig configuration for the PDP using this repository.
+     * @param pdpConfig configuration for the PDP using this repository
+     * @param refreshTimer timer used to schedule policy refresh tasks
      */
-    public PolicyRepository(PDPConfiguration pdpConfig) {
+    public PolicyRepository(PDPConfiguration pdpConfig, Timer refreshTimer) {
         papClient = new PolicyAdministrationPointClient(pdpConfig);
 
-        refreshPolicy();
-
-        updatePolicyTimer = new Timer("PAP Policy Polling", true);
+        updatePolicyTimer = refreshTimer;
 
         long refreshInterval = pdpConfig.getPolicyRetentionInterval() * 60 * 1000;
-        updatePolicyTimer.schedule(new TimerTask() {
+        updatePolicyTimer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 refreshPolicy();
             }
-        }, refreshInterval, refreshInterval);
+        }, 0, refreshInterval);
     }
 
     /**
@@ -77,12 +81,12 @@ public class PolicyRepository {
         try {
             log.info("Refreshing authorization policy from remote PAPs");
             org.opensaml.xacml.policy.PolicySetType policySetOM = papClient.retrievePolicySet();
-            if(policySetOM != null){
+            if (policySetOM != null) {
+                policyLogger.debug("Retrieved XACML policy\n{}", XMLHelper.nodeToString(policySetOM.getDOM()));
                 policySet = (PolicySetType) PolicyConverter.unmarshal(policySetOM.getDOM());
             }
         } catch (Exception e) {
             log.error("Error refreshing policy from remote PAP, continuing to use existing policy.", e);
         }
-
     }
 }
