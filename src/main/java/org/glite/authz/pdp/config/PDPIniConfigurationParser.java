@@ -100,7 +100,10 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
             throw new ConfigurationException("Unable to parse INI configuration file", e);
         }
 
+        log.debug("Processing PDP {} configuration section", SERVICE_SECTION_HEADER);
         processServiceSection(pdpIni, configBuilder);
+
+        log.debug("Processing PDP {} configuration section", POLICY_SECTION_HEADER);
         processPAPConfiguration(pdpIni, configBuilder);
 
         return configBuilder.build();
@@ -139,7 +142,8 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
         BasicParserPool parserPool = new BasicParserPool();
         parserPool.setMaxPoolSize(1);
 
-        HttpClientBuilder soapClientBuilder = buildSOAPClientBuilder(configSection);
+        HttpClientBuilder soapClientBuilder = buildSOAPClientBuilder(configSection, configBuilder.getKeyManager(),
+                configBuilder.getTrustManager());
         configBuilder.setSoapClient(new HttpSOAPClient(soapClientBuilder.buildClient(), parserPool));
     }
 
