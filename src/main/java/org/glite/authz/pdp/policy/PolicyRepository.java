@@ -21,9 +21,9 @@ import java.util.TimerTask;
 
 import org.glite.authz.common.logging.LoggingConstants;
 import org.glite.authz.pdp.config.PDPConfiguration;
+import org.glite.authz.pdp.util.XACMLUtil;
 import org.herasaf.xacml.core.policy.PolicyConverter;
 import org.herasaf.xacml.core.policy.impl.PolicySetType;
-import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,9 +35,9 @@ public class PolicyRepository {
 
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(PolicyRepository.class);
-
-    /** Policy log. */
-    private final Logger policyLogger = LoggerFactory.getLogger(LoggingConstants.PROTOCOL_MESSAGE_CATEGORY);
+    
+    /** Policy logger. */
+    private final Logger policyLog = LoggerFactory.getLogger(LoggingConstants.POLICY_MESSAGE_CATEGORY);
 
     /** Client used to connect to the remote PAP and retrieve the policy set. */
     private PolicyAdministrationPointClient papClient;
@@ -82,8 +82,11 @@ public class PolicyRepository {
             log.info("Refreshing authorization policy from remote PAPs");
             org.opensaml.xacml.policy.PolicySetType policySetOM = papClient.retrievePolicySet();
             if (policySetOM != null) {
-                policyLogger.debug("Retrieved XACML policy\n{}", XMLHelper.prettyPrintXML(policySetOM.getDOM()));
                 policySet = (PolicySetType) PolicyConverter.unmarshal(policySetOM.getDOM());
+                log.info("Loaded new policy");
+                if(policyLog.isInfoEnabled()){
+                    policyLog.info(XACMLUtil.marshall(policySet));
+                }
             }
         } catch (Exception e) {
             log.error("Error refreshing policy from remote PAP, continuing to use existing policy.", e);

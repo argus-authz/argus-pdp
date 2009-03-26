@@ -30,6 +30,7 @@ import org.glite.authz.common.config.ConfigurationException;
 import org.glite.authz.common.http.JettyRunThread;
 import org.glite.authz.common.http.JettyShutdownCommand;
 import org.glite.authz.common.http.JettyShutdownService;
+import org.glite.authz.common.logging.AccessLoggingFilter;
 import org.glite.authz.common.logging.LoggingReloadTask;
 import org.glite.authz.common.util.Files;
 import org.glite.authz.pdp.config.PDPConfiguration;
@@ -38,6 +39,7 @@ import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.servlet.FilterHolder;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.log.Log;
 import org.mortbay.thread.concurrent.ThreadPool;
@@ -79,6 +81,7 @@ public class PDPDaemon {
         initializeLogging(System.getProperty(PDP_HOME_PROP) + "/conf/logging.xml", taskTimer);
 
         DefaultBootstrap.bootstrap();
+        HerasAFBootstrap.bootstap();
         
         PDPConfiguration daemonConfig = parseConfiguration(args[0]);
 
@@ -93,8 +96,8 @@ public class PDPDaemon {
             JettyShutdownService.startJettyShutdownService(daemonConfig.getShutdownPort(), shutdownCommands);
         }
 
-        Log.info("PDP service initialized");
         pdpDaemonServiceThread.start();
+        Log.info("PDP started");
     }
 
     private static Server createDaemonService(PDPConfiguration daemonConfig, Timer taskTimer) {
@@ -127,6 +130,9 @@ public class PDPDaemon {
         servletContext.setDisplayName("PDP Daemon");
         servletContext.setAttribute(PDPConfiguration.BINDING_NAME, daemonConfig);
         servletContext.setAttribute(AuthorizationRequestServlet.TIMER_ATTRIB, taskTimer);
+        
+        FilterHolder accessLoggingFilter = new FilterHolder(new AccessLoggingFilter());
+        servletContext.addFilter(accessLoggingFilter, "/*", Context.REQUEST);
 
         ServletHolder daemonRequestServlet = new ServletHolder(new AuthorizationRequestServlet());
         daemonRequestServlet.setName("PDP Daemon Servlet");

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.glite.authz.pdp.server;
+package org.glite.authz.pdp.util;
 
 import java.security.NoSuchAlgorithmException;
 

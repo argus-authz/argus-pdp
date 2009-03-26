@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.glite.authz.pdp.server;
 
 import java.util.HashMap;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 
 import org.herasaf.xacml.core.combiningAlgorithm.policy.PolicyCombiningAlgorithm;
 import org.herasaf.xacml.core.combiningAlgorithm.policy.impl.PolicyDenyOverridesAlgorithm;
@@ -33,6 +37,7 @@ import org.herasaf.xacml.core.combiningAlgorithm.rule.impl.RulePermitOverridesAl
 import org.herasaf.xacml.core.converter.URNToDataTypeConverter;
 import org.herasaf.xacml.core.converter.URNToFunctionConverter;
 import org.herasaf.xacml.core.converter.URNToPolicyCombiningAlgorithmConverter;
+import org.herasaf.xacml.core.converter.URNToRuleCombiningAlgorithmConverter;
 import org.herasaf.xacml.core.dataTypeAttribute.DataTypeAttribute;
 import org.herasaf.xacml.core.dataTypeAttribute.impl.AnyURIDataTypeAttribute;
 import org.herasaf.xacml.core.dataTypeAttribute.impl.Base64BinaryDataTypeAttribute;
@@ -260,20 +265,47 @@ import org.herasaf.xacml.core.function.impl.stringConversionFunctions.StringNorm
 import org.herasaf.xacml.core.function.impl.stringConversionFunctions.StringNormalizeToLowerCaseFunction;
 import org.herasaf.xacml.core.function.impl.stringFunctions.StringConcatenateFunction;
 import org.herasaf.xacml.core.function.impl.stringFunctions.UriStringConcatenateFunction;
+import org.herasaf.xacml.core.utils.ContextAndPolicy;
+import org.herasaf.xacml.core.utils.ContextAndPolicyConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Initializes the core HERASAF library. */
 public final class HerasAFBootstrap {
 
+    /** Class logger. */
+    private static final Logger log = LoggerFactory.getLogger(HerasAFBootstrap.class);
+
     /** Bootstraps the HERASAF library. */
-    public static void bootstap(){
+    public static void bootstap() {
+        initializeJAXB();
         initializeDataTypes();
         initializeFunctions();
         initializePolicyCombiningAlgorithms();
         initializeRuleCombiningAlgorithms();
+
     }
-    
+
+    /** Initializes the JAXB configuration used to unmarshall policies. */
+    private static void initializeJAXB() {
+        try {
+            JAXBContext jaxbCtx = JAXBContext
+                    .newInstance("org.herasaf.xacml.core.policy.impl:org.herasaf.xacml.core.context.impl");
+
+            ContextAndPolicyConfiguration capConfig = new ContextAndPolicyConfiguration();
+            capConfig.setContext(jaxbCtx);
+
+            ContextAndPolicy.setPolicyProfile(capConfig);
+            ContextAndPolicy.setRequestCtxProfile(capConfig);
+            ContextAndPolicy.setRequestCtxProfile(capConfig);
+        } catch (JAXBException e) {
+            log.error("Unable to initialize JAXB", e);
+            throw new RuntimeException(e);
+        }
+    }
+
     /** Initialize all the standard attribute data types. */
-    private static void initializeDataTypes(){
+    private static void initializeDataTypes() {
         HashMap<String, DataTypeAttribute<?>> dataTypes = new HashMap<String, DataTypeAttribute<?>>();
         dataTypes.put(AnyURIDataTypeAttribute.ID, new AnyURIDataTypeAttribute());
         dataTypes.put(Base64BinaryDataTypeAttribute.ID, new Base64BinaryDataTypeAttribute());
@@ -291,14 +323,14 @@ public final class HerasAFBootstrap {
         dataTypes.put(TimeDataTypeAttribute.ID, new TimeDataTypeAttribute());
         dataTypes.put(X500DataTypeAttribute.ID, new X500DataTypeAttribute());
         dataTypes.put(YearMonthDurationDataTypeAttribute.ID, new YearMonthDurationDataTypeAttribute());
-        
+
         URNToDataTypeConverter.setDataTypeAttributes(dataTypes);
     }
-    
+
     /** Initialize all the standard policy functions types. */
-    private static void initializeFunctions(){
+    private static void initializeFunctions() {
         HashMap<String, Function> functions = new HashMap<String, Function>();
-        
+
         // arithmetic functions
         functions.put(DoubleAbsFunction.ID, new DoubleAbsFunction());
         functions.put(DoubleAddFunction.ID, new DoubleAddFunction());
@@ -314,7 +346,7 @@ public final class HerasAFBootstrap {
         functions.put(IntegerMultiplyFunction.ID, new IntegerMultiplyFunction());
         functions.put(IntegerSubtractFunction.ID, new IntegerSubtractFunction());
         functions.put(RoundFunction.ID, new RoundFunction());
-        
+
         // bag functions
         functions.put(AnyUriBagFunction.ID, new AnyUriBagFunction());
         functions.put(AnyUriBagSizeFunction.ID, new AnyUriBagSizeFunction());
@@ -380,7 +412,7 @@ public final class HerasAFBootstrap {
         functions.put(DateTimeAddYearMonthDurationFunction.ID, new DateTimeAddYearMonthDurationFunction());
         functions.put(DateTimeSubtractDayTimeDurationFunction.ID, new DateTimeSubtractDayTimeDurationFunction());
         functions.put(DateTimeSubtractYearMonthDurationFunction.ID, new DateTimeSubtractYearMonthDurationFunction());
-        
+
         // equality functions
         functions.put(AnyURIEqualFunction.ID, new AnyURIEqualFunction());
         functions.put(Base64BinaryEqualFunction.ID, new Base64BinaryEqualFunction());
@@ -396,7 +428,7 @@ public final class HerasAFBootstrap {
         functions.put(TimeEqualFunction.ID, new TimeEqualFunction());
         functions.put(X500NameEqualFunction.ID, new X500NameEqualFunction());
         functions.put(YearMonthDurationEqualFunction.ID, new YearMonthDurationEqualFunction());
-        
+
         // higher order bag functions
         functions.put(AllOfAllFunction.ID, new AllOfAllFunction());
         functions.put(AllOfAnyFunction.ID, new AllOfAnyFunction());
@@ -405,13 +437,13 @@ public final class HerasAFBootstrap {
         functions.put(AnyOfAnyFunction.ID, new AnyOfAnyFunction());
         functions.put(AnyOfFunction.ID, new AnyOfFunction());
         functions.put(MapFunction.ID, new MapFunction());
-        
+
         // logical functions
         functions.put(ANDFunction.ID, new ANDFunction());
         functions.put(NOFFunction.ID, new NOFFunction());
         functions.put(NotFunction.ID, new NotFunction());
         functions.put(ORFunction.ID, new ORFunction());
-        
+
         // non-numeric comparison functions
         functions.put(DateGreaterThanFunction.ID, new DateGreaterThanFunction());
         functions.put(DateGreaterThanOrEqualFunction.ID, new DateGreaterThanOrEqualFunction());
@@ -430,7 +462,7 @@ public final class HerasAFBootstrap {
         functions.put(TimeInRangeFunction.ID, new TimeInRangeFunction());
         functions.put(TimeLessThanFunction.ID, new TimeLessThanFunction());
         functions.put(TimeLessThanOrEqualFunction.ID, new TimeLessThanOrEqualFunction());
-        
+
         // numeric comparison functions
         functions.put(DoubleGreaterThanFunction.ID, new DoubleGreaterThanFunction());
         functions.put(DoubleGreaterThanOrEqualFunction.ID, new DoubleGreaterThanOrEqualFunction());
@@ -440,11 +472,11 @@ public final class HerasAFBootstrap {
         functions.put(IntegerGreaterThanOrEqualFunction.ID, new IntegerGreaterThanOrEqualFunction());
         functions.put(IntegerLessThanFunction.ID, new IntegerLessThanFunction());
         functions.put(IntegerLessThanOrEqualFunction.ID, new IntegerLessThanOrEqualFunction());
-        
+
         // numeric data type conversion functions
         functions.put(DoubleToIntegerFunction.ID, new DoubleToIntegerFunction());
         functions.put(IntegerToDoubleFunction.ID, new IntegerToDoubleFunction());
-        
+
         // regular expression functions
         functions.put(AnyURIRegexpMatchFunction.ID, new AnyURIRegexpMatchFunction());
         functions.put(DNSNameRegexpMatchFunction.ID, new DNSNameRegexpMatchFunction());
@@ -452,7 +484,7 @@ public final class HerasAFBootstrap {
         functions.put(RFC822NameRegexpMatchFunction.ID, new RFC822NameRegexpMatchFunction());
         functions.put(StringRegexpMatchFunction.ID, new StringRegexpMatchFunction());
         functions.put(X500NameRegexpMatchFunction.ID, new X500NameRegexpMatchFunction());
-        
+
         // set functions
         functions.put(AnyURIAtLeastOneMemberOfFunction.ID, new AnyURIAtLeastOneMemberOfFunction());
         functions.put(AnyURIIntersectionFunction.ID, new AnyURIIntersectionFunction());
@@ -519,29 +551,30 @@ public final class HerasAFBootstrap {
         functions.put(X500NameSetEqualsFunction.ID, new X500NameSetEqualsFunction());
         functions.put(X500NameSubsetFunction.ID, new X500NameSubsetFunction());
         functions.put(X500NameUnionFunction.ID, new X500NameUnionFunction());
-        functions.put(YearMonthDurationAtLeastOneMemberOfFunction.ID, new YearMonthDurationAtLeastOneMemberOfFunction());
+        functions
+                .put(YearMonthDurationAtLeastOneMemberOfFunction.ID, new YearMonthDurationAtLeastOneMemberOfFunction());
         functions.put(YearMonthDurationIntersectionFunction.ID, new YearMonthDurationIntersectionFunction());
         functions.put(YearMonthDurationSetEqualsFunction.ID, new YearMonthDurationSetEqualsFunction());
         functions.put(YearMonthDurationSubsetFunction.ID, new YearMonthDurationSubsetFunction());
         functions.put(YearMonthDurationUnionFunction.ID, new YearMonthDurationUnionFunction());
-        
+
         // special matching functions
         functions.put(RFC822NameMatchFunction.ID, new RFC822NameMatchFunction());
         functions.put(X500NameMatchFunction.ID, new X500NameMatchFunction());
-        
+
         // string conversion functions
         functions.put(StringNormalizeSpaceFunction.ID, new StringNormalizeSpaceFunction());
         functions.put(StringNormalizeToLowerCaseFunction.ID, new StringNormalizeToLowerCaseFunction());
-        
+
         // string functions
         functions.put(StringConcatenateFunction.ID, new StringConcatenateFunction());
         functions.put(UriStringConcatenateFunction.ID, new UriStringConcatenateFunction());
-        
+
         URNToFunctionConverter.setFunctions(functions);
     }
-    
+
     /** Initialize all the standard policy combining types. */
-    private static void initializePolicyCombiningAlgorithms(){
+    private static void initializePolicyCombiningAlgorithms() {
         HashMap<String, PolicyCombiningAlgorithm> algos = new HashMap<String, PolicyCombiningAlgorithm>();
         algos.put(PolicyDenyOverridesAlgorithm.ID, new PolicyDenyOverridesAlgorithm());
         algos.put(PolicyFirstApplicableAlgorithm.ID, new PolicyFirstApplicableAlgorithm());
@@ -549,17 +582,19 @@ public final class HerasAFBootstrap {
         algos.put(PolicyOrderedDenyOverridesAlgorithm.ID, new PolicyOrderedDenyOverridesAlgorithm());
         algos.put(PolicyOrderedPermitOverridesAlgorithm.ID, new PolicyOrderedPermitOverridesAlgorithm());
         algos.put(PolicyPermitOverridesAlgorithm.ID, new PolicyPermitOverridesAlgorithm());
-        
+
         URNToPolicyCombiningAlgorithmConverter.setCombiningAlgorithms(algos);
     }
-    
+
     /** Initialize all the standard rule combining types. */
-    private static void initializeRuleCombiningAlgorithms(){
+    private static void initializeRuleCombiningAlgorithms() {
         HashMap<String, RuleCombiningAlgorithm> algos = new HashMap<String, RuleCombiningAlgorithm>();
         algos.put(RuleDenyOverridesAlgorithm.ID, new RuleDenyOverridesAlgorithm());
         algos.put(RuleFirstApplicableAlgorithm.ID, new RuleFirstApplicableAlgorithm());
         algos.put(RuleOrderedDenyOverridesAlgorithm.ID, new RuleOrderedDenyOverridesAlgorithm());
         algos.put(RuleOrderedPermitOverridesAlgorithm.ID, new RuleOrderedPermitOverridesAlgorithm());
         algos.put(RulePermitOverridesAlgorithm.ID, new RulePermitOverridesAlgorithm());
+        
+        URNToRuleCombiningAlgorithmConverter.setCombiningAlgorithms(algos);
     }
 }

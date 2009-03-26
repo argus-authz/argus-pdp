@@ -10,15 +10,20 @@
     <logger name="org.glite">
         <level value="INFO" />
     </logger>
-
-    <!-- Logs incoming and outgoing SAML messages, set level to DEBUG to enable -->
-    <logger name="org.glite.authz.message.protocol" additivity="false">
-        <level value="OFF" />
+    <logger name="org.herasaf">
+        <level value="ERROR" />
     </logger>
 
-    <!-- Logs fetched and evaluated policies, set level to DEBUG to enable -->
-    <logger name="org.glite.authz.message.policy" additivity="false">
-        <level value="OFF" />
+    <!-- Logs incoming and outgoing SAML messages, set level to ALL to enable -->
+    <logger name="org.glite.authz.message.protocol">
+        <level value="ALL" />
+    </logger>
+
+    <!-- Logs fetched and evaluated policies -->
+    <!-- Set level to INFO to log policies as they are refreshed from the PAP -->
+    <!-- Set level to DEBUG to log the policies as they evaluated against incomming requests -->
+    <logger name="org.glite.authz.message.policy">
+        <level value="ALL" />
     </logger>
 
     <!-- Normally you should not edit below this point. -->
@@ -70,12 +75,12 @@
         </layout>
     </appender>
   
-    <logger name="org.glite.authz.access">
+    <logger name="org.glite.authz.access" additivity="false">
         <level value="ALL" />
         <appender-ref ref="ACCESS" />
     </logger>
     
-    <logger name="org.glite.authz.audit">
+    <logger name="org.glite.authz.audit" additivity="false">
         <level value="ALL" />
         <appender-ref ref="AUDIT" />
     </logger>

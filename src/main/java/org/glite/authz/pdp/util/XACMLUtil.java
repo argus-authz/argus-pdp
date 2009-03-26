@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-package org.glite.authz.pdp.server;
+package org.glite.authz.pdp.util;
 
+import java.io.StringWriter;
+
+import javax.xml.bind.JAXBException;
+
+import org.herasaf.xacml.core.utils.ContextAndPolicy;
+import org.herasaf.xacml.core.utils.ContextAndPolicy.JAXBProfile;
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.saml2.core.Statement;
@@ -116,6 +122,9 @@ public class XACMLUtil {
         XACMLObjectBuilder<ResultType> resultBuilder = (XACMLObjectBuilder<ResultType>) Configuration
                 .getBuilderFactory().getBuilder(ResultType.DEFAULT_ELEMENT_NAME);
         ResultType result = resultBuilder.buildObject();
+        
+        // TODO add resource ID
+        
         result.setDecision(xacmlDecision);
         result.setStatus(status);
 
@@ -149,5 +158,30 @@ public class XACMLUtil {
         status.setStatusCode(statusCode);
 
         return status;
+    }
+    
+    /**
+     * Marshalls a JAX element.
+     * 
+     * @param jaxbElement element to marshall
+     * 
+     * @return the marshalled form of the element or null if he element could not be marshalled
+     */
+    public static String marshall(Object jaxbElement){
+        if(jaxbElement == null){
+            return null;
+        }
+        
+        try {
+            javax.xml.bind.Marshaller marshaller = ContextAndPolicy.getMarshaller(JAXBProfile.POLICY);
+            marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FRAGMENT, true);
+            StringWriter writer = new StringWriter();
+            marshaller.marshal(jaxbElement, writer);
+            return writer.toString();
+        } catch (JAXBException e) {
+            LOG.error("Unable to log policy to be used for authorization decision", e);
+            return null;
+        }
     }
 }

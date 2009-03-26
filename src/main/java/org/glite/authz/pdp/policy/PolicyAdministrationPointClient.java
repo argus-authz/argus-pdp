@@ -22,6 +22,7 @@ import net.jcip.annotations.ThreadSafe;
 
 import org.glite.authz.common.AuthorizationServiceException;
 import org.glite.authz.common.AuthzServiceConstants;
+import org.glite.authz.common.logging.LoggingConstants;
 import org.glite.authz.pdp.config.PDPConfiguration;
 import org.joda.time.DateTime;
 import org.opensaml.Configuration;
@@ -45,10 +46,13 @@ import org.opensaml.xacml.policy.IdReferenceType;
 import org.opensaml.xacml.policy.PolicySetType;
 import org.opensaml.xacml.profile.saml.XACMLPolicyQueryType;
 import org.opensaml.xacml.profile.saml.XACMLPolicyStatementType;
+import org.opensaml.xml.io.Marshaller;
+import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 
 /** A simple client to the Policy Administration Point. */
 @ThreadSafe
@@ -56,6 +60,9 @@ public class PolicyAdministrationPointClient {
 
     /** Class logger. */
     private Logger log = LoggerFactory.getLogger(PolicyAdministrationPointClient.class);
+
+    /** Protocol message logger. */
+    private Logger protocolLogger = LoggerFactory.getLogger(LoggingConstants.PROTOCOL_MESSAGE_CATEGORY);
 
     /** PDP configuration. */
     private PDPConfiguration pdpConfig;
@@ -74,7 +81,7 @@ public class PolicyAdministrationPointClient {
 
     /** Builder of {@link Issuer}s. */
     private SAMLObjectBuilder<Issuer> issuerBuilder;
-    
+
     /** Builder of policy set ID references. */
     private XACMLObjectBuilder<IdReferenceType> idReferenceBuilder;
 
@@ -96,7 +103,8 @@ public class PolicyAdministrationPointClient {
                 XACMLPolicyQueryType.TYPE_NAME_XACML20);
         issuerBuilder = (SAMLObjectBuilder<Issuer>) Configuration.getBuilderFactory().getBuilder(
                 Issuer.DEFAULT_ELEMENT_NAME);
-        idReferenceBuilder = (XACMLObjectBuilder<IdReferenceType>) Configuration.getBuilderFactory().getBuilder(IdReferenceType.POLICY_SET_ID_REFERENCE_ELEMENT_NAME);
+        idReferenceBuilder = (XACMLObjectBuilder<IdReferenceType>) Configuration.getBuilderFactory().getBuilder(
+                IdReferenceType.POLICY_SET_ID_REFERENCE_ELEMENT_NAME);
     }
 
     /**
@@ -109,6 +117,20 @@ public class PolicyAdministrationPointClient {
      */
     public PolicySetType retrievePolicySet() throws AuthorizationServiceException {
         SOAPMessageContext messageContext = buildMessageContext();
+
+        if (protocolLogger.isInfoEnabled()) {
+            try {
+                Marshaller outboundMessageMarshaller = Configuration.getMarshallerFactory().getMarshaller(
+                        messageContext.getOutboundMessage());
+                Element outboundMessage = outboundMessageMarshaller.marshall(messageContext.getOutboundMessage());
+                protocolLogger.info("Outbound XACML policy query request\n{}", XMLHelper
+                        .prettyPrintXML(outboundMessage));
+            } catch (MarshallingException e) {
+                log.error("Unable to marshall outbound policy request", e);
+                throw new AuthorizationServiceException("Unable to marshall outbound policy request", e);
+            }
+        }
+
         Envelope soapResponse = null;
         SOAPClient soapClient = pdpConfig.getSOAPClient();
         for (String pap : pdpConfig.getPAPEndpointss()) {
@@ -128,8 +150,11 @@ public class PolicyAdministrationPointClient {
         }
 
         if (soapResponse != null) {
+            if (protocolLogger.isInfoEnabled()) {
+                protocolLogger.info("Inbound XACML policy query response\n{}", XMLHelper.prettyPrintXML(soapResponse
+                        .getDOM()));
+            }
             Response samlResponse = (Response) soapResponse.getBody().getOrderedChildren().get(0);
-            System.out.println("\n\n\n" + XMLHelper.nodeToString(samlResponse.getDOM()) + "\n\n\n");
             return extractPolicySet(samlResponse);
         } else {
             return null;
@@ -165,10 +190,11 @@ public class PolicyAdministrationPointClient {
         Issuer issuer = issuerBuilder.buildObject();
         issuer.setFormat(Issuer.ENTITY);
         issuer.setValue(pdpConfig.getEntityId());
-        
-        IdReferenceType policySetReference = idReferenceBuilder.buildObject(IdReferenceType.POLICY_SET_ID_REFERENCE_ELEMENT_NAME);
-        policySetReference.setValue(pdpConfig.getPolicySetId());        
-        
+
+        IdReferenceType policySetReference = idReferenceBuilder
+                .buildObject(IdReferenceType.POLICY_SET_ID_REFERENCE_ELEMENT_NAME);
+        policySetReference.setValue(pdpConfig.getPolicySetId());
+
         XACMLPolicyQueryType policyQuery = policyQueryBuilder.buildObject(
                 XACMLPolicyQueryType.DEFAULT_ELEMENT_NAME_XACML20, XACMLPolicyQueryType.TYPE_NAME_XACML20);
         policyQuery.setID(idGen.generateIdentifier());
@@ -210,10 +236,10 @@ public class PolicyAdministrationPointClient {
                     }
                     XACMLPolicyStatementType policyStatement = (XACMLPolicyStatementType) policyStatements.get(0);
                     List<PolicySetType> policySets = policyStatement.getPolicySets();
-                    if(policySets != null && policySets.size() > 1){
+                    if (policySets != null && policySets.size() > 1) {
                         log.warn("PAP return more than one policy set, only the first will be used");
                     }
-                    if(policySets.size() > 0){
+                    if (policySets.size() > 0) {
                         return policySets.get(0);
                     }
                 }

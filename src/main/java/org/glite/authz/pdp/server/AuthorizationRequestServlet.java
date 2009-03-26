@@ -23,15 +23,18 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import org.glite.authz.common.AuthorizationServiceException;
 import org.glite.authz.common.http.BaseHttpServlet;
-import org.glite.authz.common.logging.AccessLogEntry;
 import org.glite.authz.common.logging.LoggingConstants;
 import org.glite.authz.pdp.config.PDPConfiguration;
 import org.glite.authz.pdp.policy.PolicyRepository;
+import org.glite.authz.pdp.util.AuditLogEntry;
+import org.glite.authz.pdp.util.SAMLUtil;
+import org.glite.authz.pdp.util.XACMLUtil;
 import org.herasaf.xacml.core.combiningAlgorithm.CombiningAlgorithm;
 import org.herasaf.xacml.core.context.RequestInformation;
 import org.herasaf.xacml.core.context.impl.DecisionType;
@@ -71,17 +74,14 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(AuthorizationRequestServlet.class);
 
-    /** Access log. */
-    private final Logger accessLog = LoggerFactory.getLogger(LoggingConstants.ACCESS_CATEGORY);
-
-    /** Audit log. */
+    /** Authorization decision audit log. */
     private final Logger auditLog = LoggerFactory.getLogger(LoggingConstants.AUDIT_CATEGORY);
 
     /** Protocol message log. */
-    private final Logger messageLog = LoggerFactory.getLogger(LoggingConstants.MESSAGE_CATEGORY);
+    private final Logger protocolLog = LoggerFactory.getLogger(LoggingConstants.PROTOCOL_MESSAGE_CATEGORY);
 
     /** Policy log. */
-    private final Logger policyLogger = LoggerFactory.getLogger(LoggingConstants.PROTOCOL_MESSAGE_CATEGORY);
+    private final Logger policyLog = LoggerFactory.getLogger(LoggingConstants.POLICY_MESSAGE_CATEGORY);
 
     /** PDP configuration. */
     private PDPConfiguration pdpConfig;
@@ -131,8 +131,6 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
     /** {@inheritDoc} */
     protected void doPost(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException,
             IOException {
-        accessLog.debug(new AccessLogEntry(httpRequest).toString());
-
         AuthzRequestMessageContext messageContext = new AuthzRequestMessageContext();
 
         Response samlResponse;
@@ -172,8 +170,8 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         try {
             log.debug("Decoding incomming message");
             messageDecoder.decode(messageContext);
-            if (messageLog.isDebugEnabled()) {
-                messageLog.debug("Incomming SOAP message\n{}", XMLHelper.prettyPrintXML(messageContext
+            if (protocolLog.isInfoEnabled()) {
+                protocolLog.info("Incomming SOAP message\n{}", XMLHelper.prettyPrintXML(messageContext
                         .getInboundMessage().getDOM()));
             }
         } catch (MessageDecodingException e) {
@@ -201,18 +199,19 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         log.debug("Encoding response");
         try {
             messageEncoder.encode(messageContext);
-            if (messageLog.isDebugEnabled()) {
-                messageLog.debug("SOAP response\n{}", XMLHelper.prettyPrintXML(messageContext.getOutboundMessage()
+            if (protocolLog.isDebugEnabled()) {
+                protocolLog.debug("SOAP response\n{}", XMLHelper.prettyPrintXML(messageContext.getOutboundMessage()
                         .getDOM()));
             }
-            // TODO audit log
+            writeAuditLogEntry(messageContext);
         } catch (MessageEncodingException e) {
             log.error("Unable to encoding response.", e);
         }
     }
 
     /**
-     * Handles the incoming authorization request.
+     * Handles the incoming authorization request. This method also sets the {@link AuthzRequestMessageContext#policy}
+     * property.
      * 
      * @param messageContext incoming message context
      * 
@@ -225,8 +224,11 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
             throw new AuthorizationServiceException(
                     "No policy available by which the incomming request may be evaluated");
         }
+        if(policyLog.isDebugEnabled()){
+            policyLog.debug("Evaluating authorization request against policy\n{}", XACMLUtil.marshall(policy));
+        }
+        messageContext.setAuthorizationPolicy(policy);
 
-        // TODO log policy
         try {
             log.debug("Evaluating request against authorization policy");
             RequestInformation reqInfo = new RequestInformation(null, null);
@@ -249,12 +251,15 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
      * @throws AuthorizationServiceException thrown if there is a problem converting the incoming message XML in to a
      *             XACML request
      */
+    @SuppressWarnings("unchecked")
     protected RequestType getXacmlRequest(AuthzRequestMessageContext messageContext)
             throws AuthorizationServiceException {
         XACMLAuthzDecisionQueryType authzRequest = messageContext.getInboundSAMLMessage();
         try {
             Unmarshaller unmarshaller = ContextAndPolicy.getUnmarshaller(ContextAndPolicy.JAXBProfile.REQUEST_CTX);
-            return (RequestType) unmarshaller.unmarshal(authzRequest.getRequest().getDOM());
+            JAXBElement<RequestType> reqTypeElem = (JAXBElement<RequestType>) unmarshaller.unmarshal(authzRequest
+                    .getRequest().getDOM());
+            return reqTypeElem.getValue();
         } catch (JAXBException e) {
             log.error("Unable to convert SAML/XACML authorization request into HERASAF request context", e);
             throw new AuthorizationServiceException("Invalid request message.", e);
@@ -262,7 +267,8 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
     }
 
     /**
-     * Creates the SAML response given the decision reached by the PDP.
+     * Creates the SAML response given the decision reached by the PDP. This method also sets the
+     * {@link AuthzRequestMessageContext#decision} property.
      * 
      * @param messageContext current message context
      * @param herasDecision decision reached by the PDP
@@ -283,6 +289,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         } else {
             decision = DECISION.Indeterminate;
         }
+        messageContext.setAuthorizationDecision(decision);
 
         XACMLAuthzDecisionStatementType authzStatement = XACMLUtil.buildAuthZDecisionStatement(XACMLUtil
                 .buildRequest(messageContext.getInboundSAMLMessage()), XACMLUtil.buildResponse(XACMLUtil
@@ -295,9 +302,70 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
                 .buildStatus(StatusCode.SUCCESS_URI, null));
     }
 
+    /**
+     * Writes out an audit log entry.
+     * 
+     * @param messageContext current message context
+     */
+    private void writeAuditLogEntry(AuthzRequestMessageContext messageContext) {
+        String policyId = "";
+        String policyVersion = "";
+        if (messageContext.getAuthorizationPolicy() != null) {
+            policyId = messageContext.getAuthorizationPolicy().getPolicySetId();
+            policyVersion = messageContext.getAuthorizationPolicy().getVersion();
+        }
+
+        AuditLogEntry auditEntry = new AuditLogEntry(messageContext.getInboundMessageIssuer(), messageContext
+                .getInboundSAMLMessageId(), policyId, policyVersion, messageContext.getAuthorizationDecision(),
+                messageContext.getOutboundSAMLMessageId());
+
+        auditLog.info(auditEntry.toString());
+    }
+
     /** Message context for {@link XACMLAuthzDecisionQueryType} requests. */
     private static class AuthzRequestMessageContext extends
             BasicSAMLMessageContext<XACMLAuthzDecisionQueryType, Response, NameID> {
 
+        /** Policy used to render the authorization decision. */
+        private PolicySetType policy;
+
+        /** The authorization decision. */
+        private DECISION decision;
+
+        /**
+         * Gets the policy used to reach the authorization decision.
+         * 
+         * @return policy used to reach the authorization decision
+         */
+        public PolicySetType getAuthorizationPolicy() {
+            return policy;
+        }
+
+        /**
+         * Sets the policy used to reach the authorization decision.
+         * 
+         * @param authzPolicy policy used to reach the authorization decision
+         */
+        public void setAuthorizationPolicy(PolicySetType authzPolicy) {
+            policy = authzPolicy;
+        }
+
+        /**
+         * Gets the authorization decision.
+         * 
+         * @return the authorization decision
+         */
+        public DECISION getAuthorizationDecision() {
+            return decision;
+        }
+
+        /**
+         * Sets the authorization decision.
+         * 
+         * @param authzDecision the authorization decision
+         */
+        public void setAuthorizationDecision(DECISION authzDecision) {
+            decision = authzDecision;
+        }
     }
 }
