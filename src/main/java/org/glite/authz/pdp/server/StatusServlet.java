@@ -23,9 +23,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.jcip.annotations.ThreadSafe;
+
 import org.glite.authz.common.http.BaseHttpServlet;
 
 /** Servlet providing status information for the PDP. */
+@ThreadSafe
 public class StatusServlet extends BaseHttpServlet {
 
     /** {@inheritDoc} */
@@ -37,6 +40,7 @@ public class StatusServlet extends BaseHttpServlet {
 
         httpResponse.setContentType("text/plain");
         PrintWriter out = httpResponse.getWriter();
+        out.println("service: " + Version.getServiceName());
         out.println("status: ok");
 //      out.println("start time: " + metrics.getStartupTime());
         out.println("number of processors: " + runtime.availableProcessors());

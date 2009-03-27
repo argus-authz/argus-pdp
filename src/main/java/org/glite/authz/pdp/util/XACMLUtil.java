@@ -20,6 +20,8 @@ import java.io.StringWriter;
 
 import javax.xml.bind.JAXBException;
 
+import net.jcip.annotations.ThreadSafe;
+
 import org.herasaf.xacml.core.utils.ContextAndPolicy;
 import org.herasaf.xacml.core.utils.ContextAndPolicy.JAXBProfile;
 import org.opensaml.Configuration;
@@ -44,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
 /** A helper class for creating XACML messages. */
+@ThreadSafe
 public class XACMLUtil {
 
     /** Class logger. */

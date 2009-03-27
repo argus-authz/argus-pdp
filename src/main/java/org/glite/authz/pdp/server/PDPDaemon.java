@@ -41,9 +41,10 @@ import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.FilterHolder;
 import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.log.Log;
 import org.mortbay.thread.concurrent.ThreadPool;
 import org.opensaml.DefaultBootstrap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main class of the PDP Daemon. This class kicks off the embedded Jetty server and shutdown service. It does not do any
@@ -53,6 +54,9 @@ public class PDPDaemon {
     
     /** System property name PDP_HOME path is bound to. */
     public static final String PDP_HOME_PROP = "org.glite.authz.pdp.home";
+    
+    /** Class logger. */
+    private final static Logger log = LoggerFactory.getLogger(PDPDaemon.class);
 
     /** Constructor. */
     private PDPDaemon() {
@@ -97,7 +101,7 @@ public class PDPDaemon {
         }
 
         pdpDaemonServiceThread.start();
-        Log.info("PDP started");
+        log.info(Version.getServiceIdentifier() + " started");
     }
 
     private static Server createDaemonService(PDPConfiguration daemonConfig, Timer taskTimer) {

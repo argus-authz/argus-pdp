@@ -16,6 +16,7 @@
 
 package org.glite.authz.pdp.server;
 
+/** Utility class for getting and printing the service name and version number. */
 public class Version {
 
     /**
@@ -24,7 +25,35 @@ public class Version {
      * @param args command line arguments
      */
     public static void main(String[] args) {
+        System.out.println(getServiceIdentifier());
+    }
+    
+    /**
+     * Gets the service name and version number.
+     * 
+     * @return the service name and version number
+     */
+    public static String getServiceIdentifier(){
+        return getServiceName() + " version " + getServiceVersion();
+    }
+    
+    /**
+     * Gets the name of this service.
+     * 
+     * @return name of this service
+     */
+    public static String getServiceName(){
         Package pkg = Version.class.getPackage();
-        System.out.println(pkg.getImplementationTitle() + " version: " + pkg.getImplementationVersion());
+        return pkg.getImplementationTitle();
+    }
+    
+    /**
+     * Gets the version number of this service.
+     * 
+     * @return version number of this service
+     */
+    public static String getServiceVersion(){
+        Package pkg = Version.class.getPackage();
+        return pkg.getImplementationVersion();
     }
 }

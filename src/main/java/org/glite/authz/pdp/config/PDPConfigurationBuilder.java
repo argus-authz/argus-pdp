@@ -40,7 +40,7 @@ public class PDPConfigurationBuilder extends AbstractServiceConfigurationBuilder
     /** Message security policy used on {@link org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType} messages. */
     private SecurityPolicy authzDecisionQuerySecurityPolicy;
 
-    /** Constrcutor. */
+    /** Constructor. */
     public PDPConfigurationBuilder() {
         super();
         papEndpoints = new ArrayList<String>();
@@ -48,6 +48,11 @@ public class PDPConfigurationBuilder extends AbstractServiceConfigurationBuilder
         policySetId = "-1";
     }
 
+    /**
+     * Constructor.  The created builder properties are set to the value of given prototypical configuration.
+     * 
+     * @param prototype the prototypical configuration
+     */
     public PDPConfigurationBuilder(PDPConfiguration prototype) {
         super(prototype);
         papEndpoints = prototype.getPAPEndpointss();

@@ -19,6 +19,8 @@ package org.glite.authz.pdp.policy;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import net.jcip.annotations.ThreadSafe;
+
 import org.glite.authz.common.logging.LoggingConstants;
 import org.glite.authz.pdp.config.PDPConfiguration;
 import org.glite.authz.pdp.util.XACMLUtil;
@@ -31,6 +33,7 @@ import org.slf4j.LoggerFactory;
  * This policy repository queries a logical, remote, PAP for a policy set. This policy set is then cached and refreshed
  * on a periodic basis.
  */
+@ThreadSafe
 public class PolicyRepository {
 
     /** Class logger. */
@@ -83,7 +86,7 @@ public class PolicyRepository {
             org.opensaml.xacml.policy.PolicySetType policySetOM = papClient.retrievePolicySet();
             if (policySetOM != null) {
                 policySet = (PolicySetType) PolicyConverter.unmarshal(policySetOM.getDOM());
-                log.info("Loaded new policy");
+                log.info("Loaded version {} of policy {}", policySetOM.getVersion(), policySetOM.getPolicySetId());
                 if(policyLog.isInfoEnabled()){
                     policyLog.info(XACMLUtil.marshall(policySet));
                 }

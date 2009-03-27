@@ -27,6 +27,8 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
+import net.jcip.annotations.ThreadSafe;
+
 import org.glite.authz.common.AuthorizationServiceException;
 import org.glite.authz.common.http.BaseHttpServlet;
 import org.glite.authz.common.logging.LoggingConstants;
@@ -66,6 +68,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** PDP Servlet. */
+@ThreadSafe
 public class AuthorizationRequestServlet extends BaseHttpServlet {
 
     /** Name of the servlet context attribute where this servlet expects to find a {@link Timer}. */
@@ -224,17 +227,20 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
             throw new AuthorizationServiceException(
                     "No policy available by which the incomming request may be evaluated");
         }
-        if(policyLog.isDebugEnabled()){
+        if (policyLog.isDebugEnabled()) {
             policyLog.debug("Evaluating authorization request against policy\n{}", XACMLUtil.marshall(policy));
         }
         messageContext.setAuthorizationPolicy(policy);
 
         try {
-            log.debug("Evaluating request against authorization policy");
+            log.debug("Evaluating request {} against version {} of authorization policy {}", new Object[] {
+                    messageContext.getInboundSAMLMessageId(), policy.getVersion(), policy.getPolicySetId() });
             RequestInformation reqInfo = new RequestInformation(null, null);
             CombiningAlgorithm combiningAlgo = policy.getCombiningAlg();
             DecisionType decision = combiningAlgo.evaluate(getXacmlRequest(messageContext), policy, reqInfo);
-            log.debug("A decision of {} was reached for the authorization request", decision.toString());
+            log.debug("A decision of {} was reached when evaluating authorization request {} against version {} of policy {}",
+                            new Object[] { decision.toString(), messageContext.getInboundSAMLMessageId(),
+                                    policy.getVersion(), policy.getPolicySetId() });
             return buildSAMLResponse(messageContext, decision, StatusCodeType.SC_OK);
         } catch (Exception e) {
             throw new AuthorizationServiceException("Unable to create XACML response", e);

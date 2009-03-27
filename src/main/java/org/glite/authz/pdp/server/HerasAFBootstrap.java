@@ -21,6 +21,8 @@ import java.util.HashMap;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
+import net.jcip.annotations.ThreadSafe;
+
 import org.herasaf.xacml.core.combiningAlgorithm.policy.PolicyCombiningAlgorithm;
 import org.herasaf.xacml.core.combiningAlgorithm.policy.impl.PolicyDenyOverridesAlgorithm;
 import org.herasaf.xacml.core.combiningAlgorithm.policy.impl.PolicyFirstApplicableAlgorithm;
@@ -271,6 +273,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Initializes the core HERASAF library. */
+@ThreadSafe
 public final class HerasAFBootstrap {
 
     /** Class logger. */

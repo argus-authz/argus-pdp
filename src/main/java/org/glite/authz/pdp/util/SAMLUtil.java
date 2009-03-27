@@ -18,6 +18,8 @@ package org.glite.authz.pdp.util;
 
 import java.security.NoSuchAlgorithmException;
 
+import net.jcip.annotations.ThreadSafe;
+
 import org.glite.authz.common.util.Strings;
 import org.joda.time.DateTime;
 import org.opensaml.Configuration;
@@ -33,6 +35,7 @@ import org.opensaml.saml2.core.StatusMessage;
 import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionStatementType;
 
 /** Helper methods for creating SAML messages. */
+@ThreadSafe
 public class SAMLUtil {
 
     /** Message ID generator. */
