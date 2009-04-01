@@ -27,7 +27,7 @@ function start {
 }
 
 function stop {
-    SHOST=`grep hostname $CONF | sed 's/ //g' | awk 'BEGIN {FS="="}{print $2}'`
+    SHOST="127.0.0.1"
     SPORT=`grep shutdownPort $CONF | sed 's/ //g' | awk 'BEGIN {FS="="}{print $2}'`
     if [ -z "$SPORT" ]; then
       SPORT=8153
@@ -40,9 +40,9 @@ function print_help {
    echo "PDP control script"
    echo ""
    echo "Usage:"
-   echo "  pdpctl.sh status  - print PDP status"
-   echo "  pdpctl.sh start   - to start the service"
-   echo "  pdpctl.sh stop    - to stop the service" 
+   echo "  $0 status  - print PDP status"
+   echo "  $0 start   - to start the service"
+   echo "  $0 stop    - to stop the service" 
    echo ""
 }
 

@@ -49,10 +49,18 @@ public class PDPDaemonAdminCLI {
         Logger rootLogger = lc.getLogger(LoggerContext.ROOT_NAME);
         rootLogger.setLevel(Level.OFF);
 
+        String host = args[1];
+        if(host.equals("0.0.0.0")){
+            host = "127.0.0.1";
+        }
+        if(host.equals("[::]")){
+            host = "[::1]";
+        }
+        
         if (Strings.safeEquals(args[0], "status")) {
-            doStat(args[1], Integer.parseInt(args[2]));
+            doStat(host, Integer.parseInt(args[2]));
         } else if (Strings.safeEquals(args[0], "shutdown")) {
-            doShutdown(args[1], Integer.parseInt(args[2]));
+            doShutdown(host, Integer.parseInt(args[2]));
         } else {
             errorAndExit("Invalid command");
         }

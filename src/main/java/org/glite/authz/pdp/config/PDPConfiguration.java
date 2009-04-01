@@ -22,6 +22,7 @@ import java.util.List;
 import net.jcip.annotations.ThreadSafe;
 
 import org.glite.authz.common.config.AbstractServiceConfiguration;
+import org.glite.authz.pdp.server.PDPMetrics;
 import org.opensaml.ws.security.SecurityPolicy;
 
 /** Policy decision point configuration. */
@@ -42,7 +43,7 @@ public class PDPConfiguration extends AbstractServiceConfiguration {
 
     /** Constructor. */
     protected PDPConfiguration() {
-        super();
+        super(new PDPMetrics());
         policyRetentionInterval = 0;
         policySetId = null;
         papEndpoints = null;

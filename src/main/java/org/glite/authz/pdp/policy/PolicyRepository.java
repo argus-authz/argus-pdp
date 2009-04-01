@@ -23,6 +23,7 @@ import net.jcip.annotations.ThreadSafe;
 
 import org.glite.authz.common.logging.LoggingConstants;
 import org.glite.authz.pdp.config.PDPConfiguration;
+import org.glite.authz.pdp.server.PDPMetrics;
 import org.glite.authz.pdp.util.XACMLUtil;
 import org.herasaf.xacml.core.policy.PolicyConverter;
 import org.herasaf.xacml.core.policy.impl.PolicySetType;
@@ -38,9 +39,12 @@ public class PolicyRepository {
 
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(PolicyRepository.class);
-    
+
     /** Policy logger. */
     private final Logger policyLog = LoggerFactory.getLogger(LoggingConstants.POLICY_MESSAGE_CATEGORY);
+
+    /** Configuration for the daemon. */
+    private PDPConfiguration daemonConfig;
 
     /** Client used to connect to the remote PAP and retrieve the policy set. */
     private PolicyAdministrationPointClient papClient;
@@ -58,6 +62,7 @@ public class PolicyRepository {
      * @param refreshTimer timer used to schedule policy refresh tasks
      */
     public PolicyRepository(PDPConfiguration pdpConfig, Timer refreshTimer) {
+        daemonConfig = pdpConfig;
         papClient = new PolicyAdministrationPointClient(pdpConfig);
 
         updatePolicyTimer = refreshTimer;
@@ -86,8 +91,11 @@ public class PolicyRepository {
             org.opensaml.xacml.policy.PolicySetType policySetOM = papClient.retrievePolicySet();
             if (policySetOM != null) {
                 policySet = (PolicySetType) PolicyConverter.unmarshal(policySetOM.getDOM());
-                log.info("Loaded version {} of policy {}", policySetOM.getVersion(), policySetOM.getPolicySetId());
-                if(policyLog.isInfoEnabled()){
+                String policySetId = policySetOM.getPolicySetId();
+                String policyVersion = policySetOM.getVersion();
+                ((PDPMetrics)daemonConfig.getServiceMetrics()).updatePolicyInformation(policySetId, policyVersion);
+                log.info("Loaded version {} of policy {}", policyVersion, policySetId);
+                if (policyLog.isInfoEnabled()) {
                     policyLog.info(XACMLUtil.marshall(policySet));
                 }
             }

@@ -30,6 +30,7 @@ import org.glite.authz.common.config.ConfigurationException;
 import org.glite.authz.common.http.JettyRunThread;
 import org.glite.authz.common.http.JettyShutdownCommand;
 import org.glite.authz.common.http.JettyShutdownService;
+import org.glite.authz.common.http.ServiceStatusServlet;
 import org.glite.authz.common.logging.AccessLoggingFilter;
 import org.glite.authz.common.logging.LoggingReloadTask;
 import org.glite.authz.common.util.Files;
@@ -51,10 +52,10 @@ import org.slf4j.LoggerFactory;
  * of the request processing.
  */
 public class PDPDaemon {
-    
+
     /** System property name PDP_HOME path is bound to. */
     public static final String PDP_HOME_PROP = "org.glite.authz.pdp.home";
-    
+
     /** Class logger. */
     private final static Logger log = LoggerFactory.getLogger(PDPDaemon.class);
 
@@ -73,7 +74,7 @@ public class PDPDaemon {
         if (args.length < 1 || args.length > 1) {
             errorAndExit("Invalid configuration file", null);
         }
-        
+
         ArrayList<Runnable> shutdownCommands = new ArrayList<Runnable>();
 
         final Timer taskTimer = new Timer(true);
@@ -86,17 +87,17 @@ public class PDPDaemon {
 
         DefaultBootstrap.bootstrap();
         HerasAFBootstrap.bootstap();
-        
+
         PDPConfiguration daemonConfig = parseConfiguration(args[0]);
 
         Server pepDaemonService = createDaemonService(daemonConfig, taskTimer);
         JettyRunThread pdpDaemonServiceThread = new JettyRunThread(pepDaemonService);
         pdpDaemonServiceThread.setName("PDP Deamon Service");
         shutdownCommands.add(new JettyShutdownCommand(pepDaemonService));
-        
-        if(daemonConfig.getShutdownPort() == 0){
+
+        if (daemonConfig.getShutdownPort() == 0) {
             JettyShutdownService.startJettyShutdownService(8153, shutdownCommands);
-        }else{
+        } else {
             JettyShutdownService.startJettyShutdownService(daemonConfig.getShutdownPort(), shutdownCommands);
         }
 
@@ -120,9 +121,9 @@ public class PDPDaemon {
 
         SelectChannelConnector connector = new SelectChannelConnector();
         connector.setHost(daemonConfig.getHostname());
-        if(daemonConfig.getPort() == 0){
+        if (daemonConfig.getPort() == 0) {
             connector.setPort(8152);
-        }else{
+        } else {
             connector.setPort(daemonConfig.getPort());
         }
         connector.setMaxIdleTime(daemonConfig.getConnectionTimeout());
@@ -134,7 +135,7 @@ public class PDPDaemon {
         servletContext.setDisplayName("PDP Daemon");
         servletContext.setAttribute(PDPConfiguration.BINDING_NAME, daemonConfig);
         servletContext.setAttribute(AuthorizationRequestServlet.TIMER_ATTRIB, taskTimer);
-        
+
         FilterHolder accessLoggingFilter = new FilterHolder(new AccessLoggingFilter());
         servletContext.addFilter(accessLoggingFilter, "/*", Context.REQUEST);
 
@@ -142,7 +143,7 @@ public class PDPDaemon {
         daemonRequestServlet.setName("PDP Daemon Servlet");
         servletContext.addServlet(daemonRequestServlet, "/authz");
 
-        ServletHolder daemonStatusServlet = new ServletHolder(new StatusServlet());
+        ServletHolder daemonStatusServlet = new ServletHolder(new ServiceStatusServlet());
         daemonStatusServlet.setName("PDP Status Servlet");
         servletContext.addServlet(daemonStatusServlet, "/status");
 
@@ -203,6 +204,6 @@ public class PDPDaemon {
         LoggingReloadTask reloadTask = new LoggingReloadTask(loggingConfigFilePath);
         int refreshPeriod = 5 * 60 * 1000; // check/reload every 5 minutes
         reloadTask.run();
-        reloadTasks.scheduleAtFixedRate(reloadTask, refreshPeriod, refreshPeriod); 
+        reloadTasks.scheduleAtFixedRate(reloadTask, refreshPeriod, refreshPeriod);
     }
 }

@@ -141,6 +141,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
             decodeMessage(messageContext, httpRequest, httpResponse);
             samlResponse = evaluateRequest(messageContext);
         } catch (AuthorizationServiceException e) {
+            pdpConfig.getServiceMetrics().incrementTotalServiceRequestErrors();
             log.error("Error processing authorization request.", e);
             samlResponse = buildSAMLResponse(messageContext, DecisionType.INDETERMINATE,
                     StatusCodeType.SC_PROCESSING_ERROR);
@@ -206,6 +207,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
                 protocolLog.debug("SOAP response\n{}", XMLHelper.prettyPrintXML(messageContext.getOutboundMessage()
                         .getDOM()));
             }
+            pdpConfig.getServiceMetrics().incrementTotalServiceRequests();
             writeAuditLogEntry(messageContext);
         } catch (MessageEncodingException e) {
             log.error("Unable to encoding response.", e);
@@ -233,17 +235,22 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         messageContext.setAuthorizationPolicy(policy);
 
         try {
-            log.debug("Evaluating request {} against version {} of authorization policy {}", new Object[] {
-                    messageContext.getInboundSAMLMessageId(), policy.getVersion(), policy.getPolicySetId() });
+            log.debug("Evaluating request {} from {} against version {} of authorization policy {}", new Object[] {
+                    messageContext.getInboundSAMLMessageId(), messageContext.getInboundMessageIssuer(),
+                    policy.getVersion(), policy.getPolicySetId() });
             RequestInformation reqInfo = new RequestInformation(null, null);
             CombiningAlgorithm combiningAlgo = policy.getCombiningAlg();
             DecisionType decision = combiningAlgo.evaluate(getXacmlRequest(messageContext), policy, reqInfo);
-            log.debug("A decision of {} was reached when evaluating authorization request {} against version {} of policy {}",
+            log
+                    .debug(
+                            "A decision of {} was reached when evaluating authorization request {} against version {} of policy {}",
                             new Object[] { decision.toString(), messageContext.getInboundSAMLMessageId(),
                                     policy.getVersion(), policy.getPolicySetId() });
             return buildSAMLResponse(messageContext, decision, StatusCodeType.SC_OK);
         } catch (Exception e) {
-            throw new AuthorizationServiceException("Unable to create XACML response", e);
+            pdpConfig.getServiceMetrics().incrementTotalServiceRequestErrors();
+            log.error("Error evaluating policy", e);
+            return buildSAMLResponse(messageContext, DecisionType.INDETERMINATE, StatusCodeType.SC_PROCESSING_ERROR);
         }
     }
 
@@ -313,7 +320,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
      * 
      * @param messageContext current message context
      */
-    private void writeAuditLogEntry(AuthzRequestMessageContext messageContext) {
+    protected void writeAuditLogEntry(AuthzRequestMessageContext messageContext) {
         String policyId = "";
         String policyVersion = "";
         if (messageContext.getAuthorizationPolicy() != null) {

@@ -93,17 +93,17 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
 
         Ini pdpIni = new Ini();
         try {
-            log.debug("Loading INI configuration file");
+            log.info("Loading INI configuration file");
             pdpIni.load(iniReader);
         } catch (Exception e) {
             log.error("Unable to parser INI configuration file", e);
             throw new ConfigurationException("Unable to parse INI configuration file", e);
         }
 
-        log.debug("Processing PDP {} configuration section", SERVICE_SECTION_HEADER);
+        log.info("Processing PDP {} configuration section", SERVICE_SECTION_HEADER);
         processServiceSection(pdpIni, configBuilder);
 
-        log.debug("Processing PDP {} configuration section", POLICY_SECTION_HEADER);
+        log.info("Processing PDP {} configuration section", POLICY_SECTION_HEADER);
         processPAPConfiguration(pdpIni, configBuilder);
 
         return configBuilder.build();
@@ -128,7 +128,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
         }
 
         String papsStr = IniConfigUtil.getString(configSection, PAP_PROP);
-        log.debug("Policy administration points: {}", papsStr);
+        log.info("Policy administration points: {}", papsStr);
         StringTokenizer paps = new StringTokenizer(configSection.get(PAP_PROP), " ");
         while (paps.hasMoreTokens()) {
             configBuilder.getPAPEndpoints().add(paps.nextToken());
@@ -136,7 +136,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
 
         int policyRetentionInterval = IniConfigUtil.getInt(configSection, POLICY_RETENTION_PROP,
                 DEFAULT_POLICY_RETENTION, 1, Integer.MAX_VALUE);
-        log.debug("Policy retention interval: {} minutes", policyRetentionInterval);
+        log.info("Policy retention interval: {} minutes", policyRetentionInterval);
         configBuilder.setPolicyRetentionInterval(policyRetentionInterval);
 
         BasicParserPool parserPool = new BasicParserPool();
@@ -160,7 +160,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
         int clockSkew = IniConfigUtil.getInt(configSection, CLOCK_SKEW_PROP, DEFAULT_CLOCK_SKEW, 1, Integer.MAX_VALUE);
         int messageValidityPeriod = IniConfigUtil.getInt(configSection, MESSAGE_VALIDITY_PROP,
                 DEFAULT_MESSAGE_VALIDITY, 1, Integer.MAX_VALUE);
-        log.debug("SAML message validating: {} seconds with a {} second clock skew", messageValidityPeriod, clockSkew);
+        log.info("SAML message validating: {} seconds with a {} second clock skew", messageValidityPeriod, clockSkew);
         IssueInstantRule issueInstant = new IssueInstantRule(clockSkew, messageValidityPeriod);
         securityPolicy.getPolicyRules().add(issueInstant);
 
