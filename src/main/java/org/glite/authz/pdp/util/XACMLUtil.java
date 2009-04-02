@@ -22,6 +22,7 @@ import javax.xml.bind.JAXBException;
 
 import net.jcip.annotations.ThreadSafe;
 
+import org.glite.authz.common.util.Strings;
 import org.herasaf.xacml.core.utils.ContextAndPolicy;
 import org.herasaf.xacml.core.utils.ContextAndPolicy.JAXBProfile;
 import org.opensaml.Configuration;
@@ -115,7 +116,7 @@ public class XACMLUtil {
      * @return the constructed response
      */
     @SuppressWarnings("unchecked")
-    public static ResponseType buildResponse(StatusType status, DECISION decision) {
+    public static ResponseType buildResponse(String resourceId, StatusType status, DECISION decision) {
         XACMLObjectBuilder<DecisionType> decisionBuilder = (XACMLObjectBuilder<DecisionType>) Configuration
                 .getBuilderFactory().getBuilder(org.opensaml.xacml.ctx.DecisionType.DEFAULT_ELEMENT_NAME);
 
@@ -126,7 +127,7 @@ public class XACMLUtil {
                 .getBuilderFactory().getBuilder(ResultType.DEFAULT_ELEMENT_NAME);
         ResultType result = resultBuilder.buildObject();
         
-        // TODO add resource ID
+        result.setResourceId(Strings.safeTrimOrNullString(resourceId));
         
         result.setDecision(xacmlDecision);
         result.setStatus(status);
