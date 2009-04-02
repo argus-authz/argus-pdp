@@ -17,6 +17,7 @@
 package org.glite.authz.pdp.server;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Timer;
 
 import javax.servlet.ServletConfig;
@@ -57,6 +58,8 @@ import org.opensaml.ws.security.SecurityPolicyResolver;
 import org.opensaml.ws.security.provider.StaticSecurityPolicyResolver;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
+import org.opensaml.xacml.ctx.AttributeType;
+import org.opensaml.xacml.ctx.ResourceType;
 import org.opensaml.xacml.ctx.StatusCodeType;
 import org.opensaml.xacml.ctx.DecisionType.DECISION;
 import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType;
@@ -304,15 +307,48 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         }
         messageContext.setAuthorizationDecision(decision);
 
+        String resourceId = extractResourceId(messageContext.getInboundSAMLMessage());
+
         XACMLAuthzDecisionStatementType authzStatement = XACMLUtil.buildAuthZDecisionStatement(XACMLUtil
-                .buildRequest(messageContext.getInboundSAMLMessage()), XACMLUtil.buildResponse(XACMLUtil
+                .buildRequest(messageContext.getInboundSAMLMessage()), XACMLUtil.buildResponse(resourceId, XACMLUtil
                 .buildStatus(statusCodeValue), decision));
 
         Assertion samlAssertion = SAMLUtil.buildAssertion(pdpConfig.getEntityId(), messageContext
                 .getOutboundSAMLMessageIssueInstant(), authzStatement);
+
         return SAMLUtil.buildSAMLResponse(messageContext.getInboundSAMLMessageId(), messageContext
                 .getOutboundSAMLMessageIssueInstant(), samlAssertion, SAMLUtil
                 .buildStatus(StatusCode.SUCCESS_URI, null));
+    }
+
+    /**
+     * Extract the resource ID from the XACML request if it was present.
+     * 
+     * @param authzRequest the XACML authorization request
+     * 
+     * @return the resource ID from the request or null if there was no ID
+     */
+    private String extractResourceId(XACMLAuthzDecisionQueryType authzRequest) {
+        List<ResourceType> resources = authzRequest.getRequest().getResources();
+        List<AttributeType> attributes;
+        List<?> attributeValues;
+        if (resources != null) {
+            for (ResourceType resource : resources) {
+                attributes = resource.getAttributes();
+                if (attributes != null) {
+                    for (AttributeType attribute : attributes) {
+                        if ("urn:oasis:names:tc:xacml:1.0:resource:resource-id".equals(attribute.getAttributeID())) {
+                            attributeValues = attribute.getAttributeValues();
+                            if (attributeValues != null && !attributeValues.isEmpty()) {
+                                return attributeValues.get(0).toString();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
