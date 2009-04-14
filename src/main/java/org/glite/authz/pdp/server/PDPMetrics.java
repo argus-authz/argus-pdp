@@ -93,8 +93,8 @@ public class PDPMetrics extends ServiceMetrics {
      */
     public void printServiceMetrics(PrintWriter writer) {
         super.printServiceMetrics(writer);
-        writer.println("policy load instant: " + policyLoadInstant);
-        writer.println("current policy: " + policyId);
-        writer.println("current policy version: " + policyVersion);
+        writer.println("policy_load_instant: " + policyLoadInstant);
+        writer.println("current_policy: " + policyId);
+        writer.println("current_policy_version: " + policyVersion);
     }
 }

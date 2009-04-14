@@ -49,7 +49,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
     public static final String PAP_PROP = "paps";
 
     /** The name of the {@value} property which indicates length of time, in minutes, a policy will be cached. */
-    public static final String POLICY_RETENTION_PROP = "retentionInternval";
+    public static final String POLICY_RETENTION_PROP = "retentionInterval";
 
     /** The name of the {@value} property which indicates the allowed clock skew, in seconds. */
     public static final String CLOCK_SKEW_PROP = "clockSkew";
