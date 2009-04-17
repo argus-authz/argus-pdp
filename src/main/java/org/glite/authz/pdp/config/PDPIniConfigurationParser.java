@@ -20,11 +20,14 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.StringTokenizer;
 
+import javax.net.ssl.X509TrustManager;
+
 import net.jcip.annotations.ThreadSafe;
 
 import org.glite.authz.common.config.AbstractIniServiceConfigurationParser;
 import org.glite.authz.common.config.ConfigurationException;
 import org.glite.authz.common.config.IniConfigUtil;
+import org.glite.voms.VOMSTrustManager;
 import org.ini4j.Ini;
 import org.ini4j.Ini.Section;
 import org.opensaml.common.binding.security.IssueInstantRule;
@@ -57,6 +60,9 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
     /** The name of the {@value} property which indicates the maximum validity of messages, in seconds. */
     public static final String MESSAGE_VALIDITY_PROP = "messageValidityPeriod";
 
+    /** Default value of the {@value AbstractIniServiceConfigurationParser#PORT_PROP} property, {@value} . */
+    public static final int DEFAULT_PORT = 8152;
+    
     /** Default value of the {@value #POLICY_RETENTION_PROP} property, {@value} minutes. */
     public static final int DEFAULT_POLICY_RETENTION = 240;
 
@@ -77,6 +83,11 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
     /** {@inheritDoc} */
     public PDPConfiguration parse(String iniString) throws ConfigurationException {
         return parseIni(new StringReader(iniString));
+    }
+    
+    /** {@inheritDoc} */
+    protected int getPort(Section configSection) {
+        return IniConfigUtil.getInt(configSection, PORT_PROP, DEFAULT_PORT, 1, 65535);
     }
 
     /**
@@ -142,9 +153,14 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
         BasicParserPool parserPool = new BasicParserPool();
         parserPool.setMaxPoolSize(1);
 
-        HttpClientBuilder soapClientBuilder = buildSOAPClientBuilder(configSection, configBuilder.getKeyManager(),
-                configBuilder.getTrustManager());
-        configBuilder.setSoapClient(new HttpSOAPClient(soapClientBuilder.buildClient(), parserPool));
+        try {
+            X509TrustManager trustManager = new VOMSTrustManager(configBuilder.getTrustMaterialStore());
+            HttpClientBuilder soapClientBuilder = buildSOAPClientBuilder(configSection, configBuilder.getKeyManager(),
+                    trustManager);
+            configBuilder.setSoapClient(new HttpSOAPClient(soapClientBuilder.buildClient(), parserPool));
+        } catch (Exception e) {
+            throw new ConfigurationException("Unable to read X.509 trust material information.", e);
+        }
     }
 
     /**

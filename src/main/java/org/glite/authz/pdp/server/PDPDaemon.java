@@ -19,6 +19,7 @@ package org.glite.authz.pdp.server;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -26,10 +27,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.glite.authz.common.config.ConfigurationException;
 import org.glite.authz.common.http.JettyRunThread;
 import org.glite.authz.common.http.JettyShutdownCommand;
 import org.glite.authz.common.http.JettyShutdownService;
+import org.glite.authz.common.http.JettySslSelectChannelConnector;
 import org.glite.authz.common.http.ServiceStatusServlet;
 import org.glite.authz.common.logging.AccessLoggingFilter;
 import org.glite.authz.common.logging.LoggingReloadTask;
@@ -74,6 +77,8 @@ public class PDPDaemon {
         if (args.length < 1 || args.length > 1) {
             errorAndExit("Invalid configuration file", null);
         }
+        
+        Security.addProvider(new BouncyCastleProvider());
 
         ArrayList<Runnable> shutdownCommands = new ArrayList<Runnable>();
 
@@ -119,16 +124,7 @@ public class PDPDaemon {
         ThreadPool threadPool = new ThreadPool(5, daemonConfig.getMaxRequests(), 1, TimeUnit.SECONDS, requestQueue);
         httpServer.setThreadPool(threadPool);
 
-        SelectChannelConnector connector = new SelectChannelConnector();
-        connector.setHost(daemonConfig.getHostname());
-        if (daemonConfig.getPort() == 0) {
-            connector.setPort(8152);
-        } else {
-            connector.setPort(daemonConfig.getPort());
-        }
-        connector.setMaxIdleTime(daemonConfig.getConnectionTimeout());
-        connector.setRequestBufferSize(daemonConfig.getReceiveBufferSize());
-        connector.setResponseBufferSize(daemonConfig.getSendBufferSize());
+        Connector connector = createServiceConnector(daemonConfig);
         httpServer.setConnectors(new Connector[] { connector });
 
         Context servletContext = new Context(httpServer, "/", false, false);
@@ -148,6 +144,39 @@ public class PDPDaemon {
         servletContext.addServlet(daemonStatusServlet, "/status");
 
         return httpServer;
+    }
+    
+    /**
+     * Creates the HTTP connector used to receive authorization requests.
+     * 
+     * @param daemonConfig the daemon configuration
+     * 
+     * @return the created connector
+     */
+    private static Connector createServiceConnector(PDPConfiguration daemonConfig){
+        Connector connector;
+        if(!daemonConfig.isSslEnabled()){
+            connector = new SelectChannelConnector();
+        }else{
+            if(daemonConfig.getKeyManager() == null){
+                log.error("Service port was meant to be SSL enabled but no service key/certificate was specified in the configuration file");
+            }
+            if(daemonConfig.getTrustManager() == null){
+                log.error("Service port was meant to be SSL enabled but no trust information directory was specified in the configuration file");
+            }
+            connector = new JettySslSelectChannelConnector(daemonConfig.getKeyManager(), daemonConfig.getTrustManager());
+        }
+        connector.setHost(daemonConfig.getHostname());
+        if (daemonConfig.getPort() == 0) {
+            connector.setPort(8152);
+        } else {
+            connector.setPort(daemonConfig.getPort());
+        }
+        connector.setMaxIdleTime(daemonConfig.getConnectionTimeout());
+        connector.setRequestBufferSize(daemonConfig.getReceiveBufferSize());
+        connector.setResponseBufferSize(daemonConfig.getSendBufferSize());
+        
+        return connector;
     }
 
     /**
