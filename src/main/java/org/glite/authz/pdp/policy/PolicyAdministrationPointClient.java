@@ -35,9 +35,10 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.ws.soap.client.BasicSOAPMessageContext;
 import org.opensaml.ws.soap.client.SOAPClient;
-import org.opensaml.ws.soap.client.SOAPClientException;
+import org.opensaml.ws.soap.client.SOAPFaultException;
 import org.opensaml.ws.soap.client.SOAPMessageContext;
 import org.opensaml.ws.soap.client.http.HttpSOAPRequestParameters;
+import org.opensaml.ws.soap.common.SOAPException;
 import org.opensaml.ws.soap.common.SOAPObjectBuilder;
 import org.opensaml.ws.soap.soap11.Body;
 import org.opensaml.ws.soap.soap11.Envelope;
@@ -133,18 +134,19 @@ public class PolicyAdministrationPointClient {
 
         Envelope soapResponse = null;
         SOAPClient soapClient = pdpConfig.getSOAPClient();
-        for (String pap : pdpConfig.getPAPEndpointss()) {
+        for (String papEndpoint : pdpConfig.getPAPEndpointss()) {
             try {
-                soapClient.send(pap, messageContext);
+                soapClient.send(papEndpoint, messageContext);
                 if (messageContext.getInboundMessage() != null) {
-                    // TODO check to make sure we didn't get an error status back
                     soapResponse = (Envelope) messageContext.getInboundMessage();
                     break;
                 }
-            } catch (SOAPClientException e) {
-                log.warn("Unable to complete request to PAP endpoint: " + pap, e);
+            }catch (SOAPFaultException e){
+                log.warn("Recieved SOAP Fault " + e.getFault().getCode() + " from PAP endpoint: " + papEndpoint, e);
+            } catch (SOAPException e) {
+                log.warn("Unable to complete request to PAP endpoint: " + papEndpoint, e);
             } catch (SecurityException e) {
-                log.warn("Poliqy query to PAP endpoint " + pap
+                log.warn("Poliqy query to PAP endpoint " + papEndpoint
                         + " returned a message that did not meet security requirements", e);
             }
         }
