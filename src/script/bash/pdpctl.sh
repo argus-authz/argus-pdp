@@ -11,11 +11,17 @@ CONF="$HOME/conf/pdp.ini"
 function status {
     SHOST=`sed 's/ //g' $CONF | grep "^hostname" | awk 'BEGIN {FS="="}{print $2}'`
     SPORT=`sed 's/ //g' $CONF | grep "^port" | awk 'BEGIN {FS="="}{print $2}'`
+    SPORTSSL=`sed 's/ //g' $CONF | grep "^enableSSL" | awk 'BEGIN {FS="="}{print $2}'`
+    
     if [ -z "$SPORT" ]; then
       SPORT=8152
     fi
     
-    $JAVACMD $JVMOPTS 'org.glite.authz.pdp.server.PDPDaemonAdminCLI' "status" $SHOST $SPORT
+    if [ -z "$SPORTSSL" ]; then
+      SPORTSSL="false"
+    fi
+    
+    $JAVACMD $JVMOPTS 'org.glite.authz.pdp.server.PDPDaemonAdminCLI' "status" $SHOST $SPORT $SPORTSSL
 }
 
 function start {        

@@ -58,22 +58,23 @@ public class PDPDaemonAdminCLI {
         }
         
         if (Strings.safeEquals(args[0], "status")) {
-            doStat(host, Integer.parseInt(args[2]));
+            doStat(host, Integer.parseInt(args[2]), Boolean.parseBoolean(args[3]));
         } else if (Strings.safeEquals(args[0], "shutdown")) {
             doShutdown(host, Integer.parseInt(args[2]));
         } else {
             errorAndExit("Invalid command");
         }
     }
-
     /**
      * Connects to the service port and get the status of the service.
      * 
      * @param host host to connect to
      * @param port port to connect to
+     * @param sslEnabled whether the status port is running on SSL or not
      */
-    private static void doStat(String host, int port) {
-        GetMethod statCommand = new GetMethod("http://" + host + ":" + port + "/status");
+    private static void doStat(String host, int port, boolean sslEnabled) {
+        String scheme = sslEnabled ? "https" : "http";
+        GetMethod statCommand = new GetMethod(scheme + "://" + host + ":" + port + "/status");
         executeCommand(statCommand, host, port);
 
         try {
