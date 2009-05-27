@@ -579,12 +579,12 @@ public final class HerasAFBootstrap {
     /** Initialize all the standard policy combining types. */
     private static void initializePolicyCombiningAlgorithms() {
         HashMap<String, PolicyCombiningAlgorithm> algos = new HashMap<String, PolicyCombiningAlgorithm>();
-        algos.put(PolicyDenyOverridesAlgorithm.ID, new PolicyDenyOverridesAlgorithm());
-        algos.put(PolicyFirstApplicableAlgorithm.ID, new PolicyFirstApplicableAlgorithm());
-        algos.put(PolicyOnlyOneApplicableAlgorithm.ID, new PolicyOnlyOneApplicableAlgorithm());
-        algos.put(PolicyOrderedDenyOverridesAlgorithm.ID, new PolicyOrderedDenyOverridesAlgorithm());
-        algos.put(PolicyOrderedPermitOverridesAlgorithm.ID, new PolicyOrderedPermitOverridesAlgorithm());
-        algos.put(PolicyPermitOverridesAlgorithm.ID, new PolicyPermitOverridesAlgorithm());
+        algos.put(PolicyDenyOverridesAlgorithm.COMBALGOID, new PolicyDenyOverridesAlgorithm());
+        algos.put(PolicyFirstApplicableAlgorithm.COMBALGOID, new PolicyFirstApplicableAlgorithm());
+        algos.put(PolicyOnlyOneApplicableAlgorithm.COMBALGOID, new PolicyOnlyOneApplicableAlgorithm());
+        algos.put(PolicyOrderedDenyOverridesAlgorithm.COMBALGOID, new PolicyOrderedDenyOverridesAlgorithm());
+        algos.put(PolicyOrderedPermitOverridesAlgorithm.COMBALGOID, new PolicyOrderedPermitOverridesAlgorithm());
+        algos.put(PolicyPermitOverridesAlgorithm.COMBALGOID, new PolicyPermitOverridesAlgorithm());
 
         URNToPolicyCombiningAlgorithmConverter.setCombiningAlgorithms(algos);
     }
