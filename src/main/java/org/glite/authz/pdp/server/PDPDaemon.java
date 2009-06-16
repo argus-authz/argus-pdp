@@ -96,6 +96,8 @@ public class PDPDaemon {
         PDPConfiguration daemonConfig = parseConfiguration(args[0]);
 
         Server pepDaemonService = createDaemonService(daemonConfig, taskTimer);
+        pepDaemonService.setGracefulShutdown(5000);
+        
         JettyRunThread pdpDaemonServiceThread = new JettyRunThread(pepDaemonService);
         pdpDaemonServiceThread.setName("PDP Deamon Service");
         shutdownCommands.add(new JettyShutdownCommand(pepDaemonService));
