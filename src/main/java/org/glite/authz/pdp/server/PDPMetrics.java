@@ -39,7 +39,7 @@ public class PDPMetrics extends ServiceMetrics {
 
     /** Constructor. */
     public PDPMetrics() {
-        super("pdp");
+        super(Version.getServiceIdentifier());
     }
 
     /**
