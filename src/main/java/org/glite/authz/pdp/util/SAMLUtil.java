@@ -91,7 +91,7 @@ public class SAMLUtil {
     }
 
     /**
-     * Builds the Issuer of a SAML message/assertion
+     * Builds the Issuer of a SAML message/assertion.
      * 
      * @param entityId entity ID of the issuer
      * 

@@ -75,10 +75,11 @@ import org.slf4j.LoggerFactory;
 @ThreadSafe
 public class AuthorizationRequestServlet extends BaseHttpServlet {
 
-    private static final long serialVersionUID = -4398772758458846951L;
-
     /** Name of the servlet context attribute where this servlet expects to find a {@link Timer}. */
     public static final String TIMER_ATTRIB = "org.glite.authz.pdp.server.timmer";
+
+    /** Serial version UID. */
+    private static final long serialVersionUID = -4398772758458846951L;
 
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(AuthorizationRequestServlet.class);
@@ -226,6 +227,8 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
      * 
      * @param messageContext incoming message context
      * 
+     * @return the response to the processed request
+     * 
      * @throws AuthorizationServiceException thrown if there is a problem evaluating the authorization decision request
      */
     protected Response evaluateRequest(AuthzRequestMessageContext messageContext) throws AuthorizationServiceException {
@@ -243,7 +246,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         try {
             log.debug("Evaluating request {} from {} against version {} of authorization policy {}", new Object[] {
                     messageContext.getInboundSAMLMessageId(), messageContext.getInboundMessageIssuer(),
-                    policy.getVersion(), policy.getPolicySetId() });
+                    policy.getVersion(), policy.getPolicySetId(), });
             RequestInformation reqInfo = new RequestInformation(null, null);
             CombiningAlgorithm combiningAlgo = policy.getCombiningAlg();
             DecisionType decision = combiningAlgo.evaluate(getXacmlRequest(messageContext), policy, reqInfo);
@@ -251,7 +254,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
                     .debug(
                             "A decision of {} was reached when evaluating authorization request {} against version {} of policy {}",
                             new Object[] { decision.toString(), messageContext.getInboundSAMLMessageId(),
-                                    policy.getVersion(), policy.getPolicySetId() });
+                                    policy.getVersion(), policy.getPolicySetId(), });
             return buildSAMLResponse(messageContext, decision, StatusCodeType.SC_OK);
         } catch (Exception e) {
             pdpConfig.getServiceMetrics().incrementTotalServiceRequestErrors();

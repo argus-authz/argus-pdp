@@ -85,7 +85,7 @@ public class PDPMetrics extends ServiceMetrics {
     /**
      * {@inheritDoc}
      * 
-     * This method also adds the following lines:
+     * This method also adds the following lines.
      * <ul>
      * <li>policy load instant: <i>policy_load_instant</i></li>
      * <li>current policy: <i>current_policy_id</i></li>

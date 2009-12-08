@@ -15,7 +15,5 @@
  * limitations under the License.
  */
 
-/**
- * The PDP service.
- */
+/** The PDP service. */
 package org.glite.authz.pdp.server;

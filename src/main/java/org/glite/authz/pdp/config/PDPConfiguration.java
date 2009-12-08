@@ -94,7 +94,7 @@ public class PDPConfiguration extends AbstractServiceConfiguration {
      * 
      * @param policy the message security policy
      */
-    protected synchronized final void setAuthzDecisionQuerySecurityPolicy(SecurityPolicy policy) {
+    protected final synchronized void setAuthzDecisionQuerySecurityPolicy(SecurityPolicy policy) {
         if (authzDecisionQuerySecurityPolicy != null) {
             throw new IllegalStateException(
                     "Authorization decision security policy has already been set, it may not be changed");
@@ -107,7 +107,7 @@ public class PDPConfiguration extends AbstractServiceConfiguration {
      * 
      * @param paps list of registered policy administration point endpoints
      */
-    protected synchronized final void setPAPEndpoints(List<String> paps) {
+    protected final synchronized void setPAPEndpoints(List<String> paps) {
         if (papEndpoints != null) {
             throw new IllegalStateException("Policy administration points have already been set, it may not changed");
         }
@@ -125,7 +125,7 @@ public class PDPConfiguration extends AbstractServiceConfiguration {
      * 
      * @param interval interval, in minutes, between policy refreshes
      */
-    protected synchronized final void setPolicyRetentionInterval(int interval) {
+    protected final synchronized void setPolicyRetentionInterval(int interval) {
         if (policyRetentionInterval != 0) {
             throw new IllegalStateException("Policy refresh interval has already been set, it may not be changed");
         }
@@ -137,7 +137,7 @@ public class PDPConfiguration extends AbstractServiceConfiguration {
      * 
      * @param id ID of the policy set used by this PDP
      */
-    protected synchronized final void setPolicySetId(String id) {
+    protected final synchronized void setPolicySetId(String id) {
         if (policySetId != null) {
             throw new IllegalStateException("Policy set ID has already been set, it may not changed");
         }

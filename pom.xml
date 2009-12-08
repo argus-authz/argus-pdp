@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.glite.authz</groupId>
@@ -17,6 +18,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <slf4j.groupId>org.slf4j</slf4j.groupId>
         <slf4j.version>1.5.8</slf4j.version>
+        <logback.groupId>ch.qos.logback</logback.groupId>
+        <logback.version>0.9.18</logback.version>
     </properties>
 
     <repositories>
@@ -66,9 +69,14 @@
             <version>6.1.18</version>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
+            <groupId>${logback.groupId}</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>0.9.15</version>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${logback.groupId}</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
             <groupId>${slf4j.groupId}</groupId>
@@ -84,6 +92,14 @@
             <groupId>${slf4j.groupId}</groupId>
             <artifactId>log4j-over-slf4j</artifactId>
             <version>${slf4j.version}</version>
+        </dependency>
+        
+        <!-- Provided Dependencies -->
+        <dependency>
+            <groupId>net.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Runtime Dependencies -->
@@ -157,7 +173,6 @@
                 <configuration>
                     <descriptors>
                         <descriptor>src/main/assembly/bin.xml</descriptor>
-                        <descriptor>src/main/assembly/src.xml</descriptor>
                     </descriptors>
                     <tarLongFileMode>gnu</tarLongFileMode>
                 </configuration>

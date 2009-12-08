@@ -55,13 +55,13 @@ import org.slf4j.LoggerFactory;
  * Main class of the PDP Daemon. This class kicks off the embedded Jetty server and shutdown service. It does not do any
  * of the request processing.
  */
-public class PDPDaemon {
+public final class PDPDaemon {
 
     /** System property name PDP_HOME path is bound to. */
     public static final String PDP_HOME_PROP = "org.glite.authz.pdp.home";
 
     /** Class logger. */
-    private final static Logger log = LoggerFactory.getLogger(PDPDaemon.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PDPDaemon.class);
 
     /** Constructor. */
     private PDPDaemon() {
@@ -78,7 +78,7 @@ public class PDPDaemon {
         if (args.length < 1 || args.length > 1) {
             errorAndExit("Invalid configuration file", null);
         }
-        
+
         Security.addProvider(new BouncyCastleProvider());
 
         ArrayList<Runnable> shutdownCommands = new ArrayList<Runnable>();
@@ -98,7 +98,7 @@ public class PDPDaemon {
 
         Server pepDaemonService = createDaemonService(daemonConfig, taskTimer);
         pepDaemonService.setGracefulShutdown(5000);
-        
+
         JettyRunThread pdpDaemonServiceThread = new JettyRunThread(pepDaemonService);
         pdpDaemonServiceThread.setName("PDP Deamon Service");
         shutdownCommands.add(new JettyShutdownCommand(pepDaemonService));
@@ -110,9 +110,17 @@ public class PDPDaemon {
         }
 
         pdpDaemonServiceThread.start();
-        log.info(Version.getServiceIdentifier() + " started");
+        LOG.info(Version.getServiceIdentifier() + " started");
     }
 
+    /**
+     * Creates the PDP daemon server.
+     * 
+     * @param daemonConfig daemon configuration
+     * @param taskTimer task timer used to schedule various background tasks
+     * 
+     * @return the unstarted PDP daemon server
+     */
     private static Server createDaemonService(PDPConfiguration daemonConfig, Timer taskTimer) {
         Server httpServer = new Server();
         httpServer.setSendServerVersion(false);
@@ -148,7 +156,7 @@ public class PDPDaemon {
 
         return httpServer;
     }
-    
+
     /**
      * Creates the HTTP connector used to receive authorization requests.
      * 
@@ -156,16 +164,18 @@ public class PDPDaemon {
      * 
      * @return the created connector
      */
-    private static Connector createServiceConnector(PDPConfiguration daemonConfig){
+    private static Connector createServiceConnector(PDPConfiguration daemonConfig) {
         Connector connector;
-        if(!daemonConfig.isSslEnabled()){
+        if (!daemonConfig.isSslEnabled()) {
             connector = new SelectChannelConnector();
-        }else{
-            if(daemonConfig.getKeyManager() == null){
-                log.error("Service port was meant to be SSL enabled but no service key/certificate was specified in the configuration file");
+        } else {
+            if (daemonConfig.getKeyManager() == null) {
+                LOG
+                        .error("Service port was meant to be SSL enabled but no service key/certificate was specified in the configuration file");
             }
-            if(daemonConfig.getTrustManager() == null){
-                log.error("Service port was meant to be SSL enabled but no trust information directory was specified in the configuration file");
+            if (daemonConfig.getTrustManager() == null) {
+                LOG
+                        .error("Service port was meant to be SSL enabled but no trust information directory was specified in the configuration file");
             }
             connector = new JettySslSelectChannelConnector(daemonConfig.getKeyManager(), daemonConfig.getTrustManager());
         }
@@ -178,7 +188,7 @@ public class PDPDaemon {
         connector.setMaxIdleTime(daemonConfig.getConnectionTimeout());
         connector.setRequestBufferSize(daemonConfig.getReceiveBufferSize());
         connector.setResponseBufferSize(daemonConfig.getSendBufferSize());
-        
+
         return connector;
     }
 
@@ -234,7 +244,8 @@ public class PDPDaemon {
      */
     private static void initializeLogging(String loggingConfigFilePath, Timer reloadTasks) {
         LoggingReloadTask reloadTask = new LoggingReloadTask(loggingConfigFilePath);
-        int refreshPeriod = 5 * 60 * 1000; // check/reload every 5 minutes
+        // check/reload every 5 minutes
+        int refreshPeriod = 5 * 60 * 1000;
         reloadTask.run();
         reloadTasks.scheduleAtFixedRate(reloadTask, refreshPeriod, refreshPeriod);
     }

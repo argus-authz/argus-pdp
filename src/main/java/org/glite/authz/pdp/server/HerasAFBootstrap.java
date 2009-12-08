@@ -278,7 +278,7 @@ import org.slf4j.LoggerFactory;
 public final class HerasAFBootstrap {
 
     /** Class logger. */
-    private static final Logger log = LoggerFactory.getLogger(HerasAFBootstrap.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HerasAFBootstrap.class);
 
     /** Bootstraps the HERASAF library. */
     public static void bootstap() {
@@ -303,7 +303,7 @@ public final class HerasAFBootstrap {
             ContextAndPolicy.setRequestCtxProfile(capConfig);
             ContextAndPolicy.setRequestCtxProfile(capConfig);
         } catch (JAXBException e) {
-            log.error("Unable to initialize JAXB", e);
+            LOG.error("Unable to initialize JAXB", e);
             throw new RuntimeException(e);
         }
     }

@@ -111,6 +111,7 @@ public class XACMLUtil {
     /**
      * Creates a XACML response message.
      * 
+     * @param resourceId the ID of the resource to which the response is directed
      * @param status status message
      * @param decision the authorization decision
      * 
