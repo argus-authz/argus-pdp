@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.security.Security;
-import java.util.ArrayList;
 import java.util.Timer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -30,16 +29,18 @@ import java.util.concurrent.TimeUnit;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.glite.authz.common.config.ConfigurationException;
+import org.glite.authz.common.http.JettyAdminService;
 import org.glite.authz.common.http.JettyRunThread;
-import org.glite.authz.common.http.JettyShutdownCommand;
-import org.glite.authz.common.http.JettyShutdownService;
+import org.glite.authz.common.http.JettyShutdownTask;
 import org.glite.authz.common.http.JettySslSelectChannelConnector;
-import org.glite.authz.common.http.ServiceStatusServlet;
+import org.glite.authz.common.http.StatusCommand;
+import org.glite.authz.common.http.TimerShutdownTask;
 import org.glite.authz.common.logging.AccessLoggingFilter;
 import org.glite.authz.common.logging.LoggingReloadTask;
 import org.glite.authz.common.util.Files;
 import org.glite.authz.pdp.config.PDPConfiguration;
 import org.glite.authz.pdp.config.PDPIniConfigurationParser;
+import org.glite.authz.pdp.policy.PolicyRepository;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
@@ -79,37 +80,25 @@ public final class PDPDaemon {
             errorAndExit("Invalid configuration file", null);
         }
 
+        final Timer backgroundTaskTimer = new Timer(true);
+
+        initializeLogging(System.getProperty(PDP_HOME_PROP) + "/conf/logging.xml", backgroundTaskTimer);
         Security.addProvider(new BouncyCastleProvider());
-
-        ArrayList<Runnable> shutdownCommands = new ArrayList<Runnable>();
-
-        final Timer taskTimer = new Timer(true);
-        shutdownCommands.add(new Runnable() {
-            public void run() {
-                taskTimer.cancel();
-            }
-        });
-        initializeLogging(System.getProperty(PDP_HOME_PROP) + "/conf/logging.xml", taskTimer);
-
         DefaultBootstrap.bootstrap();
         HerasAFBootstrap.bootstap();
 
         PDPConfiguration daemonConfig = parseConfiguration(args[0]);
+        PolicyRepository policyRepository = PolicyRepository.instance(daemonConfig, backgroundTaskTimer);
 
-        Server pepDaemonService = createDaemonService(daemonConfig, taskTimer);
-        pepDaemonService.setGracefulShutdown(5000);
-
-        JettyRunThread pdpDaemonServiceThread = new JettyRunThread(pepDaemonService);
-        pdpDaemonServiceThread.setName("PDP Deamon Service");
-        shutdownCommands.add(new JettyShutdownCommand(pepDaemonService));
-
-        if (daemonConfig.getShutdownPort() == 0) {
-            JettyShutdownService.startJettyShutdownService(8153, shutdownCommands);
-        } else {
-            JettyShutdownService.startJettyShutdownService(daemonConfig.getShutdownPort(), shutdownCommands);
-        }
-
+        Server authzService = createDaemonService(daemonConfig, backgroundTaskTimer);
+        JettyRunThread pdpDaemonServiceThread = new JettyRunThread(authzService);
+        pdpDaemonServiceThread.setName("PDP AuthZ Service");
         pdpDaemonServiceThread.start();
+
+        JettyAdminService adminService = createAdminService(daemonConfig, backgroundTaskTimer, policyRepository,
+                authzService);
+        adminService.start();
+
         LOG.info(Version.getServiceIdentifier() + " started");
     }
 
@@ -125,6 +114,7 @@ public final class PDPDaemon {
         Server httpServer = new Server();
         httpServer.setSendServerVersion(false);
         httpServer.setSendDateHeader(false);
+        httpServer.setGracefulShutdown(5000);
 
         BlockingQueue<Runnable> requestQueue;
         if (daemonConfig.getMaxRequestQueueSize() < 1) {
@@ -150,11 +140,36 @@ public final class PDPDaemon {
         daemonRequestServlet.setName("PDP Daemon Servlet");
         servletContext.addServlet(daemonRequestServlet, "/authz");
 
-        ServletHolder daemonStatusServlet = new ServletHolder(new ServiceStatusServlet());
-        daemonStatusServlet.setName("PDP Status Servlet");
-        servletContext.addServlet(daemonStatusServlet, "/status");
-
         return httpServer;
+    }
+
+    /**
+     * Builds an admin service for the PDP. This admin service has the following commands registered with it:
+     * 
+     * <ul>
+     * <li><em>shutdown</em> - shuts down the PDP daemon service and the admin service</li>
+     * <li><em>status</em> - prints out a status page w/ metrics</li>
+     * <li><em>reloadPolicy</em> - reloads the PDP policy</li>
+     * </ul>
+     * 
+     * @param daemonConfig PDP configuration
+     * @param backgroundTaskTimer timer used for background tasks
+     * @param policyRepository PDP policy repository
+     * @param daemonService the PDP daemon service
+     * 
+     * @return the admin service
+     */
+    private static JettyAdminService createAdminService(PDPConfiguration daemonConfig, Timer backgroundTaskTimer,
+            PolicyRepository policyRepository, Server daemonService) {
+        JettyAdminService adminService = new JettyAdminService(daemonConfig.getShutdownPort());
+
+        adminService.registerAdminCommand(new StatusCommand(daemonConfig.getServiceMetrics()));
+        adminService.registerAdminCommand(new ReloadPolicyCommand(policyRepository));
+
+        adminService.registerShutdownTask(new TimerShutdownTask(backgroundTaskTimer));
+        adminService.registerShutdownTask(new JettyShutdownTask(daemonService));
+
+        return adminService;
     }
 
     /**

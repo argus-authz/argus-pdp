@@ -35,6 +35,8 @@ import org.glite.authz.common.AuthorizationServiceException;
 import org.glite.authz.common.http.BaseHttpServlet;
 import org.glite.authz.common.logging.LoggingConstants;
 import org.glite.authz.pdp.config.PDPConfiguration;
+import org.glite.authz.pdp.obligation.ObligationService;
+import org.glite.authz.pdp.pip.PolicyInformationPoint;
 import org.glite.authz.pdp.policy.PolicyRepository;
 import org.glite.authz.pdp.util.AuditLogEntry;
 import org.glite.authz.pdp.util.SAMLUtil;
@@ -61,7 +63,10 @@ import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xacml.ctx.AttributeType;
 import org.opensaml.xacml.ctx.ResourceType;
+import org.opensaml.xacml.ctx.ResponseType;
+import org.opensaml.xacml.ctx.ResultType;
 import org.opensaml.xacml.ctx.StatusCodeType;
+import org.opensaml.xacml.ctx.StatusType;
 import org.opensaml.xacml.ctx.DecisionType.DECISION;
 import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType;
 import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionStatementType;
@@ -111,6 +116,9 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
     /** Repository of XACML policies. */
     private PolicyRepository policyRepo;
 
+    /** Service used to process policy obligations. */
+    private ObligationService obligationService;
+
     /** {@inheritDoc} */
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
@@ -135,7 +143,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
 
         messageEncoder = new HTTPSOAP11Encoder();
 
-        policyRepo = new PolicyRepository(pdpConfig, taskTimer);
+        policyRepo = PolicyRepository.instance(pdpConfig, taskTimer);
     }
 
     /** {@inheritDoc} */
@@ -146,12 +154,16 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         Response samlResponse;
         try {
             decodeMessage(messageContext, httpRequest, httpResponse);
-            samlResponse = evaluateRequest(messageContext);
+            setPolicy(messageContext);
+            applyPolicyInformationPoints(messageContext);
+            evaluateAuthorizationPolicy(messageContext);
+            applyObligationHandlers(messageContext);
+            samlResponse = buildSAMLResponse(messageContext, messageContext.getAuthorizationDecision(),
+                    StatusCodeType.SC_OK);
         } catch (AuthorizationServiceException e) {
             pdpConfig.getServiceMetrics().incrementTotalServiceRequestErrors();
             log.error("Error processing authorization request.", e);
-            samlResponse = buildSAMLResponse(messageContext, DecisionType.INDETERMINATE,
-                    StatusCodeType.SC_PROCESSING_ERROR);
+            samlResponse = buildSAMLResponse(messageContext, DECISION.Indeterminate, StatusCodeType.SC_PROCESSING_ERROR);
         }
 
         encodeMessage(messageContext, samlResponse, httpRequest, httpResponse);
@@ -193,45 +205,13 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
     }
 
     /**
-     * Encodes an outgoing response.
+     * Sets the authorization policy inside the provided message context.
      * 
-     * @param messageContext message context for the current message
-     * @param samlResponse response to encode
-     * @param httpRequest incoming HTTP request
-     * @param httpResponse outgoing HTTP response
+     * @param messageContext current message context
+     * 
+     * @throws AuthorizationServiceException thrown if there is no policy available for the request
      */
-    protected void encodeMessage(AuthzRequestMessageContext messageContext, Response samlResponse,
-            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-        messageContext.setOutboundSAMLMessageIssueInstant(new DateTime());
-        messageContext.setOutboundMessageIssuer(pdpConfig.getEntityId());
-        messageContext.setOutboundSAMLMessage(samlResponse);
-        messageContext.setOutboundSAMLMessageId(messageContext.getOutboundSAMLMessage().getID());
-
-        log.debug("Encoding response");
-        try {
-            messageEncoder.encode(messageContext);
-            if (protocolLog.isDebugEnabled()) {
-                protocolLog.debug("SOAP response\n{}", XMLHelper.prettyPrintXML(messageContext.getOutboundMessage()
-                        .getDOM()));
-            }
-            pdpConfig.getServiceMetrics().incrementTotalServiceRequests();
-            writeAuditLogEntry(messageContext);
-        } catch (MessageEncodingException e) {
-            log.error("Unable to encoding response.", e);
-        }
-    }
-
-    /**
-     * Handles the incoming authorization request. This method also sets the {@link AuthzRequestMessageContext#policy}
-     * property.
-     * 
-     * @param messageContext incoming message context
-     * 
-     * @return the response to the processed request
-     * 
-     * @throws AuthorizationServiceException thrown if there is a problem evaluating the authorization decision request
-     */
-    protected Response evaluateRequest(AuthzRequestMessageContext messageContext) throws AuthorizationServiceException {
+    protected void setPolicy(AuthzRequestMessageContext messageContext) throws AuthorizationServiceException {
         PolicySetType policy = policyRepo.getPolicy();
 
         if (policy == null) {
@@ -242,7 +222,38 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
             policyLog.debug("Evaluating authorization request against policy\n{}", XACMLUtil.marshall(policy));
         }
         messageContext.setAuthorizationPolicy(policy);
+    }
 
+    /**
+     * Applies any registered {@link PolicyInformationPoint} to the request.
+     * 
+     * @param messageContext current message context
+     * 
+     * @throws AuthorizationServiceException thrown if there is a problem applying a policy information point
+     */
+    protected void applyPolicyInformationPoints(AuthzRequestMessageContext messageContext)
+            throws AuthorizationServiceException {
+        List<PolicyInformationPoint> pips = pdpConfig.getPolicyInformationPoints();
+        if (pips == null || pips.isEmpty()) {
+            return;
+        }
+
+        for (PolicyInformationPoint pip : pips) {
+            log.debug("Applying PIP '{}' to request", pip.getId());
+            pip.populateRequest(messageContext);
+        }
+    }
+
+    /**
+     * Evaluates the current request against the authorization policy.
+     * 
+     * @param messageContext current message context
+     * 
+     * @throws AuthorizationServiceException thrown if there is a problem evaluating the authorization policy
+     */
+    protected void evaluateAuthorizationPolicy(AuthzRequestMessageContext messageContext)
+            throws AuthorizationServiceException {
+        PolicySetType policy = messageContext.getAuthorizationPolicy();
         try {
             log.debug("Evaluating request {} from {} against version {} of authorization policy {}", new Object[] {
                     messageContext.getInboundSAMLMessageId(), messageContext.getInboundMessageIssuer(),
@@ -250,17 +261,44 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
             RequestInformation reqInfo = new RequestInformation(null, null);
             CombiningAlgorithm combiningAlgo = policy.getCombiningAlg();
             DecisionType decision = combiningAlgo.evaluate(getXacmlRequest(messageContext), policy, reqInfo);
-            log
-                    .debug(
-                            "A decision of {} was reached when evaluating authorization request {} against version {} of policy {}",
-                            new Object[] { decision.toString(), messageContext.getInboundSAMLMessageId(),
-                                    policy.getVersion(), policy.getPolicySetId(), });
-            return buildSAMLResponse(messageContext, decision, StatusCodeType.SC_OK);
+
+            log.debug("Evalauation of policy {} version {} resulted in decision {} for request {}", new Object[] {
+                    policy.getPolicySetId(), policy.getVersion(), decision.toString(),
+                    messageContext.getInboundSAMLMessageId(), });
+
+            if (decision == DecisionType.DENY) {
+                messageContext.setAuthorizationDecision(DECISION.Deny);
+            } else if (decision == DecisionType.PERMIT) {
+                messageContext.setAuthorizationDecision(DECISION.Permit);
+            } else if (decision == DecisionType.NOT_APPLICABLE) {
+                messageContext.setAuthorizationDecision(DECISION.NotApplicable);
+            } else {
+                messageContext.setAuthorizationDecision(DECISION.Indeterminate);
+            }
         } catch (Exception e) {
             pdpConfig.getServiceMetrics().incrementTotalServiceRequestErrors();
             log.error("Error evaluating policy", e);
-            return buildSAMLResponse(messageContext, DecisionType.INDETERMINATE, StatusCodeType.SC_PROCESSING_ERROR);
+            // TODO
+            throw new AuthorizationServiceException();
         }
+    }
+
+    /**
+     * Processes any obligations for which handlers are registered.
+     * 
+     * @param messageContext current message context
+     * 
+     * @throws AuthorizationServiceException thrown if there is a problem evaluating an obligations.
+     */
+    protected void applyObligationHandlers(AuthzRequestMessageContext messageContext)
+            throws AuthorizationServiceException {
+        if (obligationService == null) {
+            return;
+        }
+        // TODO
+        // Result
+        // messageContext.getAuthorizationDecision();
+        // obligationService.processObligations(messageContext, result);
     }
 
     /**
@@ -293,31 +331,24 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
      * {@link AuthzRequestMessageContext#decision} property.
      * 
      * @param messageContext current message context
-     * @param herasDecision decision reached by the PDP
+     * @param decision decision reached by the PDP
      * @param statusCodeValue status code for the decision
      * 
      * @return the created SAML response
      */
-    protected Response buildSAMLResponse(AuthzRequestMessageContext messageContext, DecisionType herasDecision,
+    protected Response buildSAMLResponse(AuthzRequestMessageContext messageContext, DECISION decision,
             String statusCodeValue) {
-
-        DECISION decision;
-        if (herasDecision == DecisionType.DENY) {
-            decision = DECISION.Deny;
-        } else if (herasDecision == DecisionType.PERMIT) {
-            decision = DECISION.Permit;
-        } else if (herasDecision == DecisionType.NOT_APPLICABLE) {
-            decision = DECISION.NotApplicable;
-        } else {
-            decision = DECISION.Indeterminate;
-        }
-        messageContext.setAuthorizationDecision(decision);
 
         String resourceId = extractResourceId(messageContext.getInboundSAMLMessage());
 
-        XACMLAuthzDecisionStatementType authzStatement = XACMLUtil.buildAuthZDecisionStatement(XACMLUtil
-                .buildRequest(messageContext.getInboundSAMLMessage()), XACMLUtil.buildResponse(resourceId, XACMLUtil
-                .buildStatus(statusCodeValue), decision));
+        StatusType status = XACMLUtil.buildStatus(statusCodeValue);
+
+        ResultType result = XACMLUtil.buildResult(decision, resourceId, status);
+
+        org.opensaml.xacml.ctx.RequestType request = XACMLUtil.buildRequest(messageContext.getInboundSAMLMessage());
+        ResponseType response = XACMLUtil.buildResponse(result);
+
+        XACMLAuthzDecisionStatementType authzStatement = XACMLUtil.buildAuthZDecisionStatement(request, response);
 
         Assertion samlAssertion = SAMLUtil.buildAssertion(pdpConfig.getEntityId(), messageContext
                 .getOutboundSAMLMessageIssueInstant(), authzStatement);
@@ -358,6 +389,35 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
     }
 
     /**
+     * Encodes an outgoing response.
+     * 
+     * @param messageContext message context for the current message
+     * @param samlResponse response to encode
+     * @param httpRequest incoming HTTP request
+     * @param httpResponse outgoing HTTP response
+     */
+    protected void encodeMessage(AuthzRequestMessageContext messageContext, Response samlResponse,
+            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        messageContext.setOutboundSAMLMessageIssueInstant(new DateTime());
+        messageContext.setOutboundMessageIssuer(pdpConfig.getEntityId());
+        messageContext.setOutboundSAMLMessage(samlResponse);
+        messageContext.setOutboundSAMLMessageId(messageContext.getOutboundSAMLMessage().getID());
+
+        log.debug("Encoding response");
+        try {
+            messageEncoder.encode(messageContext);
+            if (protocolLog.isDebugEnabled()) {
+                protocolLog.debug("SOAP response\n{}", XMLHelper.prettyPrintXML(messageContext.getOutboundMessage()
+                        .getDOM()));
+            }
+            pdpConfig.getServiceMetrics().incrementTotalServiceRequests();
+            writeAuditLogEntry(messageContext);
+        } catch (MessageEncodingException e) {
+            log.error("Unable to encoding response.", e);
+        }
+    }
+
+    /**
      * Writes out an audit log entry.
      * 
      * @param messageContext current message context
@@ -378,7 +438,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
     }
 
     /** Message context for {@link XACMLAuthzDecisionQueryType} requests. */
-    private static class AuthzRequestMessageContext extends
+    public static class AuthzRequestMessageContext extends
             BasicSAMLMessageContext<XACMLAuthzDecisionQueryType, Response, NameID> {
 
         /** Policy used to render the authorization decision. */

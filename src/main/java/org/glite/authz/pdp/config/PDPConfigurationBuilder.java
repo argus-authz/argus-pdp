@@ -23,6 +23,8 @@ import java.util.List;
 import net.jcip.annotations.NotThreadSafe;
 
 import org.glite.authz.common.config.AbstractServiceConfigurationBuilder;
+import org.glite.authz.pdp.obligation.ObligationService;
+import org.glite.authz.pdp.pip.PolicyInformationPoint;
 import org.opensaml.ws.security.SecurityPolicy;
 
 /** A builder of {@link PDPConfiguration}s. */
@@ -40,6 +42,12 @@ public class PDPConfigurationBuilder extends AbstractServiceConfigurationBuilder
 
     /** Message security policy used on {@link org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType} messages. */
     private SecurityPolicy authzDecisionQuerySecurityPolicy;
+    
+    /** Registered policy information points. */
+    private List<PolicyInformationPoint> pips;
+
+    /** Obligation processing service. */
+    private ObligationService obligationService;
 
     /** Constructor. */
     public PDPConfigurationBuilder() {
@@ -47,6 +55,7 @@ public class PDPConfigurationBuilder extends AbstractServiceConfigurationBuilder
         papEndpoints = new ArrayList<String>();
         policyRetentionInterval = 60 * 4;
         policySetId = "-1";
+        pips = new ArrayList<PolicyInformationPoint>();
     }
 
     /**
@@ -72,6 +81,8 @@ public class PDPConfigurationBuilder extends AbstractServiceConfigurationBuilder
         config.setPAPEndpoints(papEndpoints);
         config.setPolicyRetentionInterval(policyRetentionInterval);
         config.setPolicySetId(policySetId);
+        config.setObligationService(obligationService);
+        config.setPolicyInformationPoints(pips);
         return config;
     }
 
@@ -138,5 +149,32 @@ public class PDPConfigurationBuilder extends AbstractServiceConfigurationBuilder
      */
     public void setPolicySetId(String id) {
         policySetId = id;
+    }
+    
+    /**
+     * Gets the registered policy information points.
+     * 
+     * @return registered policy information points
+     */
+    public List<PolicyInformationPoint> getPolicyInformationPoints() {
+        return pips;
+    }
+
+    /**
+     * Gets the obligation processing service.
+     * 
+     * @return obligation processing service
+     */
+    public ObligationService getObligationService() {
+        return obligationService;
+    }
+
+    /**
+     * Sets the obligation processing service.
+     * 
+     * @param service obligation processing service
+     */
+    public void setObligationService(ObligationService service) {
+        obligationService = service;
     }
 }

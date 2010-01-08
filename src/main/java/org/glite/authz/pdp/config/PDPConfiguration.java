@@ -23,6 +23,8 @@ import java.util.List;
 import net.jcip.annotations.ThreadSafe;
 
 import org.glite.authz.common.config.AbstractServiceConfiguration;
+import org.glite.authz.pdp.obligation.ObligationService;
+import org.glite.authz.pdp.pip.PolicyInformationPoint;
 import org.glite.authz.pdp.server.PDPMetrics;
 import org.opensaml.ws.security.SecurityPolicy;
 
@@ -41,6 +43,12 @@ public class PDPConfiguration extends AbstractServiceConfiguration {
 
     /** Message security policy used on {@link org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType} messages. */
     private SecurityPolicy authzDecisionQuerySecurityPolicy;
+    
+    /** Registered {@link PolicyInformationPoint}s. */
+    private List<PolicyInformationPoint> pips;
+    
+    /** Obligation processing service. */
+    private ObligationService obligationService;
 
     /** Constructor. */
     protected PDPConfiguration() {
@@ -86,6 +94,24 @@ public class PDPConfiguration extends AbstractServiceConfiguration {
      */
     public String getPolicySetId() {
         return policySetId;
+    }
+    
+    /**
+     * Gets the policy information points meant to be applied to each request.
+     * 
+     * @return policy information points meant to be applied to each request
+     */
+    public List<PolicyInformationPoint> getPolicyInformationPoints() {
+        return pips;
+    }
+    
+    /**
+     * Gets the service used to process response obligations.
+     * 
+     * @return service used to process response obligations
+     */
+    public ObligationService getObligationService() {
+        return obligationService;
     }
 
     /**
@@ -142,5 +168,38 @@ public class PDPConfiguration extends AbstractServiceConfiguration {
             throw new IllegalStateException("Policy set ID has already been set, it may not changed");
         }
         policySetId = id;
+    }
+    
+    /**
+     * Sets the policy information points.
+     * 
+     * @param policyInformationPoints policy information point
+     */
+    protected final synchronized void setPolicyInformationPoints(List<PolicyInformationPoint> policyInformationPoints) {
+        if (policyInformationPoints == null || policyInformationPoints.isEmpty()) {
+            return;
+        }
+
+        if (pips != null) {
+            throw new IllegalArgumentException(
+                    "Policy Information Points have already been set, they may not be changed");
+        }
+        pips = Collections.unmodifiableList(policyInformationPoints);
+    }
+    
+    /**
+     * Sets the obligation processing service.
+     * 
+     * @param service obligation processing service
+     */
+    protected final synchronized void setObligationService(ObligationService service) {
+        if (service == null) {
+            return;
+        }
+
+        if (obligationService != null) {
+            throw new IllegalArgumentException("Obligation service has already been set, they may not be changed");
+        }
+        obligationService = service;
     }
 }

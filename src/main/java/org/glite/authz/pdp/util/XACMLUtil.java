@@ -111,14 +111,20 @@ public class XACMLUtil {
     /**
      * Creates a XACML response message.
      * 
-     * @param resourceId the ID of the resource to which the response is directed
-     * @param status status message
-     * @param decision the authorization decision
+     * @param result the result of the request
      * 
      * @return the constructed response
      */
     @SuppressWarnings("unchecked")
-    public static ResponseType buildResponse(String resourceId, StatusType status, DECISION decision) {
+    public static ResponseType buildResponse(ResultType result) {
+        XACMLObjectBuilder<ResponseType> xacmlResponseBuilder = (XACMLObjectBuilder<ResponseType>) Configuration
+                .getBuilderFactory().getBuilder(ResponseType.DEFAULT_ELEMENT_NAME);
+        ResponseType response = xacmlResponseBuilder.buildObject();
+        response.setResult(result);
+        return response;
+    }
+
+    public static ResultType buildResult(DECISION decision, String resourceId, StatusType status) {
         XACMLObjectBuilder<DecisionType> decisionBuilder = (XACMLObjectBuilder<DecisionType>) Configuration
                 .getBuilderFactory().getBuilder(org.opensaml.xacml.ctx.DecisionType.DEFAULT_ELEMENT_NAME);
 
@@ -128,20 +134,16 @@ public class XACMLUtil {
         XACMLObjectBuilder<ResultType> resultBuilder = (XACMLObjectBuilder<ResultType>) Configuration
                 .getBuilderFactory().getBuilder(ResultType.DEFAULT_ELEMENT_NAME);
         ResultType result = resultBuilder.buildObject();
-        
+
         result.setResourceId(Strings.safeTrimOrNullString(resourceId));
-        
+
         result.setDecision(xacmlDecision);
         result.setStatus(status);
 
         // TODO obligation support
         // result.setObligations(obligations);
 
-        XACMLObjectBuilder<ResponseType> xacmlResponseBuilder = (XACMLObjectBuilder<ResponseType>) Configuration
-                .getBuilderFactory().getBuilder(ResponseType.DEFAULT_ELEMENT_NAME);
-        ResponseType response = xacmlResponseBuilder.buildObject();
-        response.setResult(result);
-        return response;
+        return result;
     }
 
     /**
@@ -165,7 +167,7 @@ public class XACMLUtil {
 
         return status;
     }
-    
+
     /**
      * Marshalls a JAX element.
      * 
@@ -173,11 +175,11 @@ public class XACMLUtil {
      * 
      * @return the marshalled form of the element or null if he element could not be marshalled
      */
-    public static String marshall(Object jaxbElement){
-        if(jaxbElement == null){
+    public static String marshall(Object jaxbElement) {
+        if (jaxbElement == null) {
             return null;
         }
-        
+
         try {
             javax.xml.bind.Marshaller marshaller = ContextAndPolicy.getMarshaller(JAXBProfile.POLICY);
             marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT, true);

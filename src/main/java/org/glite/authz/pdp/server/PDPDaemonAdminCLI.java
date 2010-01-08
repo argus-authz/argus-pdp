@@ -52,7 +52,7 @@ public class PDPDaemonAdminCLI {
         }
         
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-        Logger rootLogger = lc.getLogger(LoggerContext.ROOT_NAME);
+        Logger rootLogger = lc.getLogger(Logger.ROOT_LOGGER_NAME);
         rootLogger.setLevel(Level.OFF);
 
         String host = null;

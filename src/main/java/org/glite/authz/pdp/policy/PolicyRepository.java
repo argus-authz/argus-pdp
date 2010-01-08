@@ -17,6 +17,7 @@
 
 package org.glite.authz.pdp.policy;
 
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -38,11 +39,21 @@ import org.slf4j.LoggerFactory;
 @ThreadSafe
 public class PolicyRepository {
 
+    /** Default {@link PolicyRepository} instance name, {@value} . */
+    public static final String DEFAULT_NAME = PolicyRepository.class.getPackage() + "."
+            + PolicyRepository.class.getName();
+
+    /** Instantiated policy repositories. */
+    private static final HashMap<String, PolicyRepository> REPO_INSTANCES = new HashMap<String, PolicyRepository>();
+
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(PolicyRepository.class);
 
     /** Policy logger. */
     private final Logger policyLog = LoggerFactory.getLogger(LoggingConstants.POLICY_MESSAGE_CATEGORY);
+
+    /** The name of the repository. */
+    private String repositoryName;
 
     /** Configuration for the daemon. */
     private PDPConfiguration daemonConfig;
@@ -62,7 +73,7 @@ public class PolicyRepository {
      * @param pdpConfig configuration for the PDP using this repository
      * @param refreshTimer timer used to schedule policy refresh tasks
      */
-    public PolicyRepository(PDPConfiguration pdpConfig, Timer refreshTimer) {
+    protected PolicyRepository(PDPConfiguration pdpConfig, Timer refreshTimer) {
         daemonConfig = pdpConfig;
         papClient = new PolicyAdministrationPointClient(pdpConfig);
 
@@ -77,6 +88,48 @@ public class PolicyRepository {
     }
 
     /**
+     * Gets an instance of a policy repository. The repository created is registered under the default repository name
+     * and if it does not exist it is created.
+     * 
+     * @param pdpConfig the PDP configuration
+     * @param backgroundTaskTimer timer used for background policy refreshes
+     * 
+     * @return the policy repository
+     */
+    public static synchronized PolicyRepository instance(PDPConfiguration pdpConfig, Timer backgroundTaskTimer) {
+        return instance(pdpConfig, backgroundTaskTimer, DEFAULT_NAME, true);
+    }
+
+    /**
+     * Gets an instance of a policy repository.
+     * 
+     * @param pdpConfig the PDP configuration
+     * @param backgroundTaskTimer timer used for background policy refreshes
+     * @param name name under which the created policy repository will be registered
+     * @param createRepository whether a policy with the given name should be created if it does not yet exists
+     * 
+     * @return the policy repository, or null if no repository was registered under the given name and was not created
+     */
+    public static synchronized PolicyRepository instance(PDPConfiguration pdpConfig, Timer backgroundTaskTimer,
+            String name, boolean createRepository) {
+        PolicyRepository repo = REPO_INSTANCES.get(name);
+        if (repo == null && createRepository) {
+            repo = new PolicyRepository(pdpConfig, backgroundTaskTimer);
+            REPO_INSTANCES.put(name, repo);
+        }
+        return repo;
+    }
+
+    /**
+     * Gets the unique name of the repository.
+     * 
+     * @return unique name of the repository
+     */
+    public String getName() {
+        return repositoryName;
+    }
+
+    /**
      * Gets the policy held by this repository.
      * 
      * @return policy held by this repository
@@ -86,7 +139,7 @@ public class PolicyRepository {
     }
 
     /** Refresh the cache copy of the policy. */
-    private void refreshPolicy() {
+    public void refreshPolicy() {
         try {
             log.info("Refreshing authorization policy from remote PAPs");
             org.opensaml.xacml.policy.PolicySetType policySetOM = papClient.retrievePolicySet();
@@ -94,7 +147,7 @@ public class PolicyRepository {
                 policySet = (PolicySetType) PolicyConverter.unmarshal(policySetOM.getDOM());
                 String policySetId = policySetOM.getPolicySetId();
                 String policyVersion = policySetOM.getVersion();
-                ((PDPMetrics)daemonConfig.getServiceMetrics()).updatePolicyInformation(policySetId, policyVersion);
+                ((PDPMetrics) daemonConfig.getServiceMetrics()).updatePolicyInformation(policySetId, policyVersion);
                 log.info("Loaded version {} of policy {}", policyVersion, policySetId);
                 if (policyLog.isInfoEnabled()) {
                     policyLog.info(XACMLUtil.marshall(policySet));
