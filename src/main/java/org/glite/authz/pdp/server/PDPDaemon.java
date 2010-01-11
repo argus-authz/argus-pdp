@@ -40,6 +40,7 @@ import org.glite.authz.common.logging.LoggingReloadTask;
 import org.glite.authz.common.util.Files;
 import org.glite.authz.pdp.config.PDPConfiguration;
 import org.glite.authz.pdp.config.PDPIniConfigurationParser;
+import org.glite.authz.pdp.pip.PolicyInformationPoint;
 import org.glite.authz.pdp.policy.PolicyRepository;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
@@ -89,6 +90,14 @@ public final class PDPDaemon {
 
         PDPConfiguration daemonConfig = parseConfiguration(args[0]);
         PolicyRepository policyRepository = PolicyRepository.instance(daemonConfig, backgroundTaskTimer);
+        if(!daemonConfig.getPolicyInformationPoints().isEmpty()){
+            for (PolicyInformationPoint pip : daemonConfig.getPolicyInformationPoints()) {
+                if (pip != null) {
+                    LOG.debug("Starting PIP {}", pip.getId());
+                    pip.start();
+                }
+            }
+        }
 
         Server authzService = createDaemonService(daemonConfig, backgroundTaskTimer);
         JettyRunThread pdpDaemonServiceThread = new JettyRunThread(authzService);
@@ -161,7 +170,13 @@ public final class PDPDaemon {
      */
     private static JettyAdminService createAdminService(PDPConfiguration daemonConfig, Timer backgroundTaskTimer,
             PolicyRepository policyRepository, Server daemonService) {
-        JettyAdminService adminService = new JettyAdminService(daemonConfig.getShutdownPort());
+        
+        int adminPort = daemonConfig.getAdminPort();
+        if(adminPort < 1){
+            adminPort = 8153;
+        }
+        
+        JettyAdminService adminService = new JettyAdminService(adminPort);
 
         adminService.registerAdminCommand(new StatusCommand(daemonConfig.getServiceMetrics()));
         adminService.registerAdminCommand(new ReloadPolicyCommand(policyRepository));
