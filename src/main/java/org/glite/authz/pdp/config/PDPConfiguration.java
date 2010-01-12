@@ -17,7 +17,6 @@
 
 package org.glite.authz.pdp.config;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,7 +57,6 @@ public class PDPConfiguration extends AbstractServiceConfiguration {
         policySetId = null;
         papEndpoints = null;
         authzDecisionQuerySecurityPolicy = null;
-        pips = new ArrayList<PolicyInformationPoint>();
     }
 
     /**

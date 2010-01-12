@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.security.Security;
+import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -90,7 +91,9 @@ public final class PDPDaemon {
 
         PDPConfiguration daemonConfig = parseConfiguration(args[0]);
         PolicyRepository policyRepository = PolicyRepository.instance(daemonConfig, backgroundTaskTimer);
-        if(!daemonConfig.getPolicyInformationPoints().isEmpty()){
+        
+        List<PolicyInformationPoint> pips = daemonConfig.getPolicyInformationPoints();
+        if(pips != null && !pips.isEmpty()){
             for (PolicyInformationPoint pip : daemonConfig.getPolicyInformationPoints()) {
                 if (pip != null) {
                     LOG.debug("Starting PIP {}", pip.getId());
