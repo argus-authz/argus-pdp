@@ -52,8 +52,6 @@ public class ReloadPolicyCommand extends AbstractAdminCommand {
     /** {@inheritDoc} */
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         policyRepository.refreshPolicy();
-        resp.setContentType("text/plain");
-        resp.getWriter().write("ok");
-        resp.flushBuffer();
+        resp.setStatus(HttpServletResponse.SC_OK);
     }
 }

@@ -174,12 +174,17 @@ public final class PDPDaemon {
     private static JettyAdminService createAdminService(PDPConfiguration daemonConfig, Timer backgroundTaskTimer,
             PolicyRepository policyRepository, Server daemonService) {
         
-        int adminPort = daemonConfig.getAdminPort();
-        if(adminPort < 1){
-            adminPort = 8153;
+        String adminHost = daemonConfig.getAdminHost();
+        if(adminHost == null){
+            adminHost = "127.0.0.1";
         }
         
-        JettyAdminService adminService = new JettyAdminService(adminPort);
+        int adminPort = daemonConfig.getAdminPort();
+        if (adminPort < 1) {
+            adminPort = 8153;
+        }
+
+        JettyAdminService adminService = new JettyAdminService(adminHost, adminPort, daemonConfig.getAdminPassword());
 
         adminService.registerAdminCommand(new StatusCommand(daemonConfig.getServiceMetrics()));
         adminService.registerAdminCommand(new ReloadPolicyCommand(policyRepository));

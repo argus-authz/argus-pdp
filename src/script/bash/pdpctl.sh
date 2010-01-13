@@ -8,47 +8,39 @@ CONF="$HOME/conf/pdp.ini"
 # Source our environment setup script
 . $HOME/bin/env.sh
 
-function status {
-    SHOST=`sed 's/ //g' $CONF | grep "^hostname" | awk 'BEGIN {FS="="}{print $2}'`
-    SPORT=`sed 's/ //g' $CONF | grep "^port" | awk 'BEGIN {FS="="}{print $2}'`
-    SPORTSSL=`sed 's/ //g' $CONF | grep "^enableSSL" | awk 'BEGIN {FS="="}{print $2}'`
+# Add the PDP home directory property
+JVMOPTS="-Dorg.glite.authz.pdp.home=$HOME $JVMOPTS"
     
-    if [ -z "$SPORT" ]; then
-      SPORT=8152
+function executeAdminCommand {
+    HOST=`sed 's/ //g' $CONF | grep "^adminHost" | awk 'BEGIN {FS="="}{print $2}'`
+    if [ -z $HOST ] ; then
+       HOST="127.0.0.1"
+    fi
+
+    PORT=`sed 's/ //g' $CONF | grep "^adminPort" | awk 'BEGIN {FS="="}{print $2}'`
+    if [ -z $PORT ] ; then
+       PORT="8153"
     fi
     
-    if [ -z "$SPORTSSL" ]; then
-      SPORTSSL="false"
-    fi
+    PASS=`sed 's/ //g' $CONF | grep "^adminPassword" | awk 'BEGIN {FS="="}{print $2}'`
     
-    $JAVACMD $JVMOPTS 'org.glite.authz.pdp.server.PDPDaemonAdminCLI' "status" $SHOST $SPORT $SPORTSSL
+    
+    $JAVACMD $JVMOPTS 'org.glite.authz.common.http.JettyAdminServiceCLI' $HOST $PORT $1 $PASS
 }
 
-function start {        
-    # Add the PDP home directory property
-    JVMOPTS="-Dorg.glite.authz.pdp.home=$HOME $JVMOPTS"
-    
+function start {
     # Run the PDP
     $JAVACMD $JVMOPTS 'org.glite.authz.pdp.server.PDPDaemon' $CONF &
-}
-
-function stop {
-    SHOST="127.0.0.1"
-    SPORT=`sed 's/ //g' $CONF | grep "^shutdownPort" | awk 'BEGIN {FS="="}{print $2}'`
-    if [ -z "$SPORT" ]; then
-      SPORT=8153
-    fi
-    
-    $JAVACMD $JVMOPTS 'org.glite.authz.pdp.server.PDPDaemonAdminCLI' "shutdown" $SHOST $SPORT
 }
 
 function print_help {
    echo "PDP control script"
    echo ""
    echo "Usage:"
-   echo "  $0 status  - print PDP status"
    echo "  $0 start   - to start the service"
    echo "  $0 stop    - to stop the service" 
+   echo "  $0 status  - print PDP status"
+   echo "  $0 reloadPolicy - reloads the policy from the PAP"
    echo ""
 }
 
@@ -58,8 +50,9 @@ if [ $# -lt 1 ] ; then
 fi
 
 case "$1" in
-  'status') status;;
   'start') start;;
-  'stop') stop;;
+  'stop') executeAdminCommand 'shutdown' ;;
+  'status') executeAdminCommand 'status' ;;
+  'reloadPolicy') executeAdminCommand 'reloadPolicy' ;;
   *) print_help ;;
 esac
