@@ -18,6 +18,7 @@
 package org.glite.authz.pdp.util;
 
 import java.io.StringWriter;
+import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
@@ -37,12 +38,17 @@ import org.opensaml.xacml.ctx.ResultType;
 import org.opensaml.xacml.ctx.StatusCodeType;
 import org.opensaml.xacml.ctx.StatusType;
 import org.opensaml.xacml.ctx.DecisionType.DECISION;
+import org.opensaml.xacml.policy.EffectType;
+import org.opensaml.xacml.policy.ObligationType;
+import org.opensaml.xacml.policy.ObligationsType;
 import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType;
 import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionStatementType;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallingException;
+import org.opensaml.xml.parse.BasicParserPool;
+import org.opensaml.xml.parse.ParserPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
@@ -53,6 +59,9 @@ public class XACMLUtil {
 
     /** Class logger. */
     private static final Logger LOG = LoggerFactory.getLogger(XACMLUtil.class);
+
+    /** Pool used to parse XML. */
+    private static final BasicParserPool parser;
 
     /**
      * Builds an authorization decision statement.
@@ -124,7 +133,18 @@ public class XACMLUtil {
         return response;
     }
 
-    public static ResultType buildResult(DECISION decision, String resourceId, StatusType status) {
+    /**
+     * Creates a Result.
+     * 
+     * @param resourceId ID of the resource
+     * @param decision result decision
+     * @param obligationCollection result obligations
+     * @param status result status
+     * 
+     * @return the constructed result
+     */
+    public static ResultType buildResult(String resourceId, DECISION decision,
+            List<ObligationType> obligationCollection, StatusType status) {
         XACMLObjectBuilder<DecisionType> decisionBuilder = (XACMLObjectBuilder<DecisionType>) Configuration
                 .getBuilderFactory().getBuilder(org.opensaml.xacml.ctx.DecisionType.DEFAULT_ELEMENT_NAME);
 
@@ -140,10 +160,53 @@ public class XACMLUtil {
         result.setDecision(xacmlDecision);
         result.setStatus(status);
 
-        // TODO obligation support
-        // result.setObligations(obligations);
+        if (obligationCollection != null && !obligationCollection.isEmpty()) {
+            XACMLObjectBuilder<ObligationsType> obligationsBuilder = (XACMLObjectBuilder<ObligationsType>) Configuration
+                    .getBuilderFactory().getBuilder(ObligationsType.SCHEMA_TYPE_NAME);
+            ObligationsType obligations = obligationsBuilder.buildObject();
+            obligations.getObligations().addAll(obligationCollection);
+            result.setObligations(obligations);
+        }
 
         return result;
+    }
+
+    /**
+     * Transforms a HERAS obligation in to an OpenSAML obligation.
+     * 
+     * <em>NOTE:</em> Obligations with attribute assignments are not currently supported.
+     * 
+     * @param herasObligation HERAS obligation to be transformed
+     * 
+     * @return the OpenSAML obligation
+     */
+    public static ObligationType buildObligation(org.herasaf.xacml.core.policy.impl.ObligationType herasObligation) {
+        if (herasObligation == null) {
+            return null;
+        }
+
+        if (herasObligation.getAttributeAssignments() != null && !herasObligation.getAttributeAssignments().isEmpty()) {
+            LOG.error("Obligations with attribute assignments are nor currently supported");
+            return null;
+        }
+
+        XACMLObjectBuilder<ObligationType> obligationBuilder = (XACMLObjectBuilder<ObligationType>) Configuration
+                .getBuilderFactory().getBuilder(ObligationType.SCHEMA_TYPE_NAME);
+        ObligationType obligation = obligationBuilder.buildObject();
+
+        obligation.setObligationId(herasObligation.getObligationId());
+        switch (herasObligation.getFulfillOn()) {
+            case DENY:
+                obligation.setFulfillOn(EffectType.Deny);
+                break;
+            case PERMIT:
+                obligation.setFulfillOn(EffectType.Permit);
+                break;
+        }
+
+        // TODO attribute assignement
+
+        return obligation;
     }
 
     /**
@@ -191,5 +254,10 @@ public class XACMLUtil {
             LOG.error("Unable to log policy to be used for authorization decision", e);
             return null;
         }
+    }
+
+    static {
+        parser = new BasicParserPool();
+        parser.setMaxPoolSize(50);
     }
 }

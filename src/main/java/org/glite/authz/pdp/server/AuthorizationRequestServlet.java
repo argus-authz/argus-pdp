@@ -18,6 +18,7 @@
 package org.glite.authz.pdp.server;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 
@@ -62,12 +63,14 @@ import org.opensaml.ws.security.provider.StaticSecurityPolicyResolver;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xacml.ctx.AttributeType;
+import org.opensaml.xacml.ctx.AttributeValueType;
 import org.opensaml.xacml.ctx.ResourceType;
 import org.opensaml.xacml.ctx.ResponseType;
 import org.opensaml.xacml.ctx.ResultType;
 import org.opensaml.xacml.ctx.StatusCodeType;
 import org.opensaml.xacml.ctx.StatusType;
 import org.opensaml.xacml.ctx.DecisionType.DECISION;
+import org.opensaml.xacml.policy.ObligationType;
 import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType;
 import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionStatementType;
 import org.opensaml.xml.parse.BasicParserPool;
@@ -158,12 +161,14 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
             applyPolicyInformationPoints(messageContext);
             evaluateAuthorizationPolicy(messageContext);
             applyObligationHandlers(messageContext);
-            samlResponse = buildSAMLResponse(messageContext, messageContext.getAuthorizationDecision(),
-                    StatusCodeType.SC_OK);
+            samlResponse = buildSAMLResponse(messageContext);
         } catch (AuthorizationServiceException e) {
             pdpConfig.getServiceMetrics().incrementTotalServiceRequestErrors();
             log.error("Error processing authorization request.", e);
-            samlResponse = buildSAMLResponse(messageContext, DECISION.Indeterminate, StatusCodeType.SC_PROCESSING_ERROR);
+            ResultType errorResult = XACMLUtil.buildResult(null, DECISION.Indeterminate, null, XACMLUtil
+                    .buildStatus(StatusCodeType.SC_PROCESSING_ERROR));
+            messageContext.setAuthorizationResult(errorResult);
+            samlResponse = buildSAMLResponse(messageContext);
         }
 
         encodeMessage(messageContext, samlResponse, httpRequest, httpResponse);
@@ -266,20 +271,32 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
                     policy.getPolicySetId(), policy.getVersion(), decision.toString(),
                     messageContext.getInboundSAMLMessageId(), });
 
-            if (decision == DecisionType.DENY) {
-                messageContext.setAuthorizationDecision(DECISION.Deny);
-            } else if (decision == DecisionType.PERMIT) {
-                messageContext.setAuthorizationDecision(DECISION.Permit);
-            } else if (decision == DecisionType.NOT_APPLICABLE) {
-                messageContext.setAuthorizationDecision(DECISION.NotApplicable);
-            } else {
-                messageContext.setAuthorizationDecision(DECISION.Indeterminate);
+            log.debug("Building authorization request result");
+            String resourceId = extractResourceId(messageContext.getInboundSAMLMessage());
+            StatusType status = XACMLUtil.buildStatus(StatusCodeType.SC_OK);
+            ArrayList<ObligationType> obligations = null;
+            if (reqInfo.getObligations() != null && reqInfo.getObligations().getObligations() != null) {
+                obligations = new ArrayList<ObligationType>();
+                for (org.herasaf.xacml.core.policy.impl.ObligationType herasObligation : reqInfo.getObligations()
+                        .getObligations()) {
+                    if (herasObligation != null) {
+                        log
+                                .debug("Adding obligation '{}' to authorization response", herasObligation
+                                        .getObligationId());
+                        obligations.add(XACMLUtil.buildObligation(herasObligation));
+                    }
+                }
             }
+
+            ResultType result = XACMLUtil.buildResult(resourceId, DECISION.valueOf(decision.value()), obligations,
+                    status);
+            log.debug("Built authorization result with a decision of {} and {} obligations", result.getDecision()
+                    .getDecision(), result.getObligations().getObligations().size());
+            messageContext.setAuthorizationResult(result);
         } catch (Exception e) {
             pdpConfig.getServiceMetrics().incrementTotalServiceRequestErrors();
             log.error("Error evaluating policy", e);
-            // TODO
-            throw new AuthorizationServiceException();
+            throw new AuthorizationServiceException("Error evaluating policy.");
         }
     }
 
@@ -295,10 +312,9 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         if (obligationService == null) {
             return;
         }
-        // TODO
-        // Result
-        // messageContext.getAuthorizationDecision();
-        // obligationService.processObligations(messageContext, result);
+
+        ResultType result = messageContext.getAuthorizationResult();
+        obligationService.processObligations(messageContext, result);
     }
 
     /**
@@ -331,22 +347,13 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
      * {@link AuthzRequestMessageContext#decision} property.
      * 
      * @param messageContext current message context
-     * @param decision decision reached by the PDP
-     * @param statusCodeValue status code for the decision
      * 
      * @return the created SAML response
      */
-    protected Response buildSAMLResponse(AuthzRequestMessageContext messageContext, DECISION decision,
-            String statusCodeValue) {
-
-        String resourceId = extractResourceId(messageContext.getInboundSAMLMessage());
-
-        StatusType status = XACMLUtil.buildStatus(statusCodeValue);
-
-        ResultType result = XACMLUtil.buildResult(decision, resourceId, status);
+    protected Response buildSAMLResponse(AuthzRequestMessageContext messageContext) {
 
         org.opensaml.xacml.ctx.RequestType request = XACMLUtil.buildRequest(messageContext.getInboundSAMLMessage());
-        ResponseType response = XACMLUtil.buildResponse(result);
+        ResponseType response = XACMLUtil.buildResponse(messageContext.getAuthorizationResult());
 
         XACMLAuthzDecisionStatementType authzStatement = XACMLUtil.buildAuthZDecisionStatement(request, response);
 
@@ -368,7 +375,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
     private String extractResourceId(XACMLAuthzDecisionQueryType authzRequest) {
         List<ResourceType> resources = authzRequest.getRequest().getResources();
         List<AttributeType> attributes;
-        List<?> attributeValues;
+        List<AttributeValueType> attributeValues;
         if (resources != null) {
             for (ResourceType resource : resources) {
                 attributes = resource.getAttributes();
@@ -377,7 +384,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
                         if ("urn:oasis:names:tc:xacml:1.0:resource:resource-id".equals(attribute.getAttributeID())) {
                             attributeValues = attribute.getAttributeValues();
                             if (attributeValues != null && !attributeValues.isEmpty()) {
-                                return attributeValues.get(0).toString();
+                                return attributeValues.get(0).getValue();
                             }
                         }
                     }
@@ -431,8 +438,8 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         }
 
         AuditLogEntry auditEntry = new AuditLogEntry(messageContext.getInboundMessageIssuer(), messageContext
-                .getInboundSAMLMessageId(), policyId, policyVersion, messageContext.getAuthorizationDecision(),
-                messageContext.getOutboundSAMLMessageId());
+                .getInboundSAMLMessageId(), policyId, policyVersion, messageContext.getAuthorizationResult()
+                .getDecision().getDecision(), messageContext.getOutboundSAMLMessageId());
 
         auditLog.info(auditEntry.toString());
     }
@@ -444,8 +451,8 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         /** Policy used to render the authorization decision. */
         private PolicySetType policy;
 
-        /** The authorization decision. */
-        private DECISION decision;
+        /** Authorization result for the request. */
+        private ResultType authorizationResult;
 
         /**
          * Gets the policy used to reach the authorization decision.
@@ -466,21 +473,21 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         }
 
         /**
-         * Gets the authorization decision.
+         * Gets the authorization result for this request.
          * 
-         * @return the authorization decision
+         * @return authorization result for this request
          */
-        public DECISION getAuthorizationDecision() {
-            return decision;
+        public ResultType getAuthorizationResult() {
+            return authorizationResult;
         }
 
         /**
-         * Sets the authorization decision.
+         * Sets the authorization result for this request.
          * 
-         * @param authzDecision the authorization decision
+         * @param result authorization result for this request
          */
-        public void setAuthorizationDecision(DECISION authzDecision) {
-            decision = authzDecision;
+        public void setAuthorizationResult(ResultType result) {
+            authorizationResult = result;
         }
     }
 }
