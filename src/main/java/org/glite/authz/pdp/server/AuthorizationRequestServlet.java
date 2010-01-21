@@ -290,8 +290,6 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
 
             ResultType result = XACMLUtil.buildResult(resourceId, DECISION.valueOf(decision.value()), obligations,
                     status);
-            log.debug("Built authorization result with a decision of {} and {} obligations", result.getDecision()
-                    .getDecision(), result.getObligations().getObligations().size());
             messageContext.setAuthorizationResult(result);
         } catch (Exception e) {
             pdpConfig.getServiceMetrics().incrementTotalServiceRequestErrors();
