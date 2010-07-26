@@ -106,16 +106,17 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
      * @throws ConfigurationException thrown if there is a problem configuring the system
      */
     private PDPConfiguration parseIni(Reader iniReader) throws ConfigurationException {
-        PDPConfigurationBuilder configBuilder = new PDPConfigurationBuilder();
 
         Ini pdpIni = new Ini();
         try {
             log.info("Loading INI configuration file");
             pdpIni.load(iniReader);
         } catch (Exception e) {
-            log.error("Unable to parser INI configuration file", e);
+            log.error("Unable to load and parse the INI configuration file", e);
             throw new ConfigurationException("Unable to parse INI configuration file", e);
         }
+
+        PDPConfigurationBuilder configBuilder = new PDPConfigurationBuilder();
 
         log.info("Processing PDP {} configuration section", SECURITY_SECTION_HEADER);
         processSecuritySection(pdpIni, configBuilder);
