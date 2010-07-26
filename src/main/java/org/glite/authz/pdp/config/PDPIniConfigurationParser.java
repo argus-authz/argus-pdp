@@ -117,9 +117,12 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
             throw new ConfigurationException("Unable to parse INI configuration file", e);
         }
 
+        log.info("Processing PDP {} configuration section", SECURITY_SECTION_HEADER);
+        processSecuritySection(pdpIni, configBuilder);
+
         log.info("Processing PDP {} configuration section", SERVICE_SECTION_HEADER);
         processServiceSection(pdpIni, configBuilder);
-
+        
         Section serviceSection = pdpIni.get(SERVICE_SECTION_HEADER);
 
         List<PolicyInformationPoint> pips = IniPIPConfigurationParserHelper.processPolicyInformationPoints(pdpIni,
