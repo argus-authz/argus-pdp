@@ -25,6 +25,7 @@ import javax.xml.bind.JAXBException;
 import net.jcip.annotations.ThreadSafe;
 
 import org.glite.authz.common.util.Strings;
+
 import org.herasaf.xacml.core.utils.ContextAndPolicy;
 import org.herasaf.xacml.core.utils.ContextAndPolicy.JAXBProfile;
 import org.opensaml.Configuration;
@@ -32,12 +33,12 @@ import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.xacml.XACMLObjectBuilder;
 import org.opensaml.xacml.ctx.DecisionType;
+import org.opensaml.xacml.ctx.DecisionType.DECISION;
 import org.opensaml.xacml.ctx.RequestType;
 import org.opensaml.xacml.ctx.ResponseType;
 import org.opensaml.xacml.ctx.ResultType;
 import org.opensaml.xacml.ctx.StatusCodeType;
 import org.opensaml.xacml.ctx.StatusType;
-import org.opensaml.xacml.ctx.DecisionType.DECISION;
 import org.opensaml.xacml.policy.EffectType;
 import org.opensaml.xacml.policy.ObligationType;
 import org.opensaml.xacml.policy.ObligationsType;
@@ -48,7 +49,6 @@ import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallingException;
 import org.opensaml.xml.parse.BasicParserPool;
-import org.opensaml.xml.parse.ParserPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
@@ -143,6 +143,7 @@ public class XACMLUtil {
      * 
      * @return the constructed result
      */
+    @SuppressWarnings("unchecked")
     public static ResultType buildResult(String resourceId, DECISION decision,
             List<ObligationType> obligationCollection, StatusType status) {
         XACMLObjectBuilder<DecisionType> decisionBuilder = (XACMLObjectBuilder<DecisionType>) Configuration
@@ -180,6 +181,7 @@ public class XACMLUtil {
      * 
      * @return the OpenSAML obligation
      */
+    @SuppressWarnings("unchecked")
     public static ObligationType buildObligation(org.herasaf.xacml.core.policy.impl.ObligationType herasObligation) {
         if (herasObligation == null) {
             return null;
