@@ -109,7 +109,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
 
         Ini pdpIni = new Ini();
         try {
-            log.info("Loading INI configuration file");
+            log.info("Loading and parsing INI configuration file");
             pdpIni.load(iniReader);
         } catch (Exception e) {
             log.error("Unable to load and parse the INI configuration file", e);
@@ -128,12 +128,12 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
 
         List<PolicyInformationPoint> pips = IniPIPConfigurationParserHelper.processPolicyInformationPoints(pdpIni,
                 serviceSection, configBuilder);
-        log.info("total policy information points: {}", pips.size());
+        log.info("Total policy information points: {}", pips.size());
         configBuilder.getPolicyInformationPoints().addAll(pips);
 
         ObligationService service = IniOHConfigurationParserHelper.processObligationHandlers(pdpIni, serviceSection,
                 configBuilder);
-        log.info("total obligation handlers: {}", service.getObligationHandlers().size());
+        log.info("Total obligation handlers: {}", service.getObligationHandlers().size());
         configBuilder.setObligationService(service);
 
         log.info("Processing PDP {} configuration section", POLICY_SECTION_HEADER);
