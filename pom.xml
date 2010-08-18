@@ -7,7 +7,7 @@
         <groupId>org.glite.authz</groupId>
         <artifactId>argus-parent</artifactId>
         <version>1.2.0</version>
-        <relativePath>../argus-parent</relativePath>
+        <relativePath>../org.glite.authz</relativePath>
     </parent>
     
     <name>Argus Authorization Service: PDP</name>
