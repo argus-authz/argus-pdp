@@ -1,5 +1,16 @@
+Changes in Release 1.2.0
+========================
+
+Bug fixed:
+- Timestamps in Argus log files do not show the date
+  https://savannah.cern.ch/bugs/?64197 
+- pdp.ini without SECURITY section cause a NullPointerException at start
+  https://savannah.cern.ch/bugs/?68858 
+
+
+
 Changes in Release 1.0.4
-===========================================
+========================
 - Add service version to status page
 - Move enableSSL config option to SECURITY section, it had mistakenly been 
   in the SERVICE section
