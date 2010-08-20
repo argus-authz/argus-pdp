@@ -106,30 +106,34 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
      * @throws ConfigurationException thrown if there is a problem configuring the system
      */
     private PDPConfiguration parseIni(Reader iniReader) throws ConfigurationException {
-        PDPConfigurationBuilder configBuilder = new PDPConfigurationBuilder();
 
         Ini pdpIni = new Ini();
         try {
-            log.info("Loading INI configuration file");
+            log.info("Loading and parsing INI configuration file");
             pdpIni.load(iniReader);
         } catch (Exception e) {
-            log.error("Unable to parser INI configuration file", e);
+            log.error("Unable to load and parse the INI configuration file", e);
             throw new ConfigurationException("Unable to parse INI configuration file", e);
         }
 
+        PDPConfigurationBuilder configBuilder = new PDPConfigurationBuilder();
+
+        log.info("Processing PDP {} configuration section", SECURITY_SECTION_HEADER);
+        processSecuritySection(pdpIni, configBuilder);
+
         log.info("Processing PDP {} configuration section", SERVICE_SECTION_HEADER);
         processServiceSection(pdpIni, configBuilder);
-
+        
         Section serviceSection = pdpIni.get(SERVICE_SECTION_HEADER);
 
         List<PolicyInformationPoint> pips = IniPIPConfigurationParserHelper.processPolicyInformationPoints(pdpIni,
                 serviceSection, configBuilder);
-        log.info("total policy information points: {}", pips.size());
+        log.info("Total policy information points: {}", pips.size());
         configBuilder.getPolicyInformationPoints().addAll(pips);
 
         ObligationService service = IniOHConfigurationParserHelper.processObligationHandlers(pdpIni, serviceSection,
                 configBuilder);
-        log.info("total obligation handlers: {}", service.getObligationHandlers().size());
+        log.info("Total obligation handlers: {}", service.getObligationHandlers().size());
         configBuilder.setObligationService(service);
 
         log.info("Processing PDP {} configuration section", POLICY_SECTION_HEADER);

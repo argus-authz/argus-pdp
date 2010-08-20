@@ -20,7 +20,8 @@ package org.glite.authz.pdp.xacml;
 import java.text.ParseException;
 
 import org.glite.authz.common.fqan.FQAN;
-import org.glite.authz.common.profile.WorkerNodeProfileV1Constants;
+import org.glite.authz.common.profile.AuthorizationProfileConstants;
+
 import org.herasaf.xacml.core.function.FunctionProcessingException;
 import org.herasaf.xacml.core.function.impl.AbstractFunction;
 
@@ -32,10 +33,15 @@ public class FQANRegexpFunction extends AbstractFunction {
 
     /** {@inheritDoc} */
     public String getFunctionId() {
-        return WorkerNodeProfileV1Constants.ALG_FQAN_REGEXP;
+        return AuthorizationProfileConstants.ID_ALGORITHM_FQAN_REGEXP_MATCH;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Returns true if the first argument of type http://www.w3.org/2001/XMLSchema#string (must be an FQAN regexp)
+     * matches the second argument of type http://glite.org/xacml/datatype/fqan.
+     */
     public Object handle(Object... args) throws FunctionProcessingException {
         if (args.length != 2 || !(args[0] instanceof String) || !(args[1] instanceof FQAN)) {
             throw new FunctionProcessingException(
