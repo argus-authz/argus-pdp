@@ -6,14 +6,14 @@
     <parent>
         <groupId>org.glite.authz</groupId>
         <artifactId>argus-parent</artifactId>
-        <version>1.2.0</version>
+        <version>1.2.1</version>
         <relativePath>../org.glite.authz</relativePath>
     </parent>
     
-    <name>Argus Authorization Service: PDP</name>
+    <name>Argus PDP</name>
     <groupId>org.glite.authz</groupId>
     <artifactId>pdp</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
 
     <description>XACML based authorization service developed within the gLite project.
     </description>
