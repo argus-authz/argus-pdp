@@ -13,7 +13,7 @@
     <name>Argus PDP</name>
     <groupId>org.glite.authz</groupId>
     <artifactId>pdp</artifactId>
-    <version>1.2.1</version>
+    <version>${pdp.version}</version>
 
     <description>XACML based authorization service developed within the gLite project.
     </description>
