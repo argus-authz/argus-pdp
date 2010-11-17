@@ -69,6 +69,9 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
     /** Default value of the {@value AbstractIniServiceConfigurationParser#PORT_PROP} property, {@value} . */
     public static final int DEFAULT_PORT = 8152;
 
+    /** Default value of the {@value AbstractIniServiceConfigurationParser#ADMIN_PORT_PROP} property, {@value} . */
+    public static final int DEFAULT_ADMIN_PORT = 8153;
+
     /** Default value of the {@value #POLICY_RETENTION_PROP} property, {@value} minutes. */
     public static final int DEFAULT_POLICY_RETENTION = 240;
 
@@ -91,9 +94,22 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
         return parseIni(new StringReader(iniString));
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     * 
+     * @return the port value, or the default port {@value #DEFAULT_PORT} if it is not set
+     */
     protected int getPort(Section configSection) {
         return IniConfigUtil.getInt(configSection, PORT_PROP, DEFAULT_PORT, 1, 65535);
+    }
+
+    /** 
+     * {@inheritDoc}
+     * 
+     * @return the admin port value, or the default admin port {@value #DEFAULT_ADMIN_PORT} if it is not set
+     */
+    protected int getAdminPort(Section configSection) {
+        return IniConfigUtil.getInt(configSection, ADMIN_PORT_PROP, DEFAULT_ADMIN_PORT, 1, 65535);
     }
 
     /**
@@ -123,7 +139,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
 
         log.info("Processing PDP {} configuration section", SERVICE_SECTION_HEADER);
         processServiceSection(pdpIni, configBuilder);
-        
+
         Section serviceSection = pdpIni.get(SERVICE_SECTION_HEADER);
 
         List<PolicyInformationPoint> pips = IniPIPConfigurationParserHelper.processPolicyInformationPoints(pdpIni,
