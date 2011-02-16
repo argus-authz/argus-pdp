@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+# Copyright (c) Members of the EGEE Collaboration. 2006-2010.
+# See http://www.eu-egee.org/partners/ for details on the copyright holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Startup script for PDP server
+#
+# chkconfig: 345 97 97
+#
+# description:  PDP server startup script
+#
+# processname: pdp
+#
+# Author(s): Maria Alandes Pradillo <yaim-contact@cern.ch>
+#            Valery Tschopp <argus-support@cern.ch>
+#
+# Version: V1.3
+#
+# Date: 11/02/2011
+###############################################################################
+# set -x
+
+# PDP server control script
+PDPCTL=/usr/sbin/pdpctl
+
+if [ `id -u` -ne 0 ]; then
+    echo "You need root privileges to run this script"
+    exit 1
+fi 
+
+# source optional system configuration
+if [ -r /etc/sysconfig/argus-pdp ]; then
+   . /etc/sysconfig/argus-pdp
+   # export the variable for the $PEPDCTL script
+   [ -n "$JAVACMD" ] && export JAVACMD="$JAVACMD"
+   [ -n "$PDP_JOPTS" ] && export PDP_JOPTS="$PDP_JOPTS"
+   [ -n "$PDP_HOME" ] && export PDP_HOME="$PDP_HOME"
+   [ -n "$PDP_CONF" ] && export PDP_CONF="$PDP_CONF"
+   [ -n "$PDP_CONFDIR" ] && export PDP_CONFDIR="$PDP_CONFDIR"
+   [ -n "$PDP_LOGDIR" ] && export PDP_LOGDIR="$PDP_LOGDIR"
+   [ -n "$PDP_LIBDIR" ] && export PDP_LIBDIR="$PDP_LIBDIR"
+   [ -n "$PDP_ENDORSEDDIR" ] && export PDP_ENDORSEDDIR="$PDP_ENDORSEDDIR"
+fi
+
+case "$1" in
+    start)
+        $PDPCTL start
+        ;; 
+    stop)
+        $PDPCTL stop
+        ;;
+    status)
+        $PDPCTL status
+        ;;
+    reloadpolicies)
+        $PDPCTL clearResponseCache
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status|clearcache}"
+        exit 1
+        ;;
+esac
+
+exit $?
+

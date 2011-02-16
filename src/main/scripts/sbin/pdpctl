@@ -1,0 +1,121 @@
+#! /bin/bash
+#
+# Copyright (c) Members of the EGEE Collaboration. 2006-2010.
+# See http://www.eu-egee.org/partners/ for details on the copyright holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#set -x
+
+# PDP server home
+PDP_HOME=${PDP_HOME-"/usr/share/argus/pdp"}
+
+# config, log and lib directories
+PDP_CONFDIR=${PDP_CONFDIR-"$PDP_HOME/conf"}
+PDP_LOGDIR=${PDP_LOGDIR-"$PDP_HOME/logs"}
+PDP_LIBDIR=${PDP_LIBDIR-"$PDP_HOME/lib"}
+PDP_ENDORSEDDIR=${PDP_ENDORSEDDIR-"$PDP_LIBDIR/endorsed"}
+
+# configuration file and check
+PDP_CONF=${PDP_CONF-"$PDP_CONFDIR/pdp.ini"}
+if [ ! -r "$PDP_CONF" ]; then
+    echo "$0: ERROR: config file $PDP_CONF not readable"
+    exit 1
+fi
+
+# java command and check
+JAVACMD=${JAVACMD-`which java`}
+if [ ! -x "$JAVACMD" ] ; then
+    echo "$0: ERROR: $JAVACMD not available in PATH"
+    exit 1
+fi
+
+
+# add in the dependency .jar files from the lib directory
+jarfiles="$PDP_LIBDIR/*.jar"
+for jar in $jarfiles
+do
+    # if the directory is empty, then it will return the input string
+    # this is stupid, so case for it
+    if [ -f "$jar" ] ; then
+        LOCALCLASSPATH="$LOCALCLASSPATH":"$jar"
+    fi
+done
+# check classpath
+if [ -z "$LOCALCLASSPATH" ]; then
+    echo "$0: ERROR: LOCALCLASSPATH empty, check the $PDP_LIBDIR directory"
+    exit 1
+fi
+# check endorsed directory
+if [ ! -d "$PDP_ENDORSEDDIR" ]; then
+    echo "$0: ERROR: $PDP_ENDORSEDDIR does not exist"
+    exit 1
+fi
+# set the mandatory endorsed dir and the classpath
+PDP_JOPTS="-Djava.endorsed.dirs=$PDP_ENDORSEDDIR -classpath $LOCALCLASSPATH $PDP_JOPTS"
+
+# set the mandatory PEP server directory properties
+PDP_JOPTS="-Dorg.glite.authz.pdp.home=$PDP_HOME -Dorg.glite.authz.pdp.confdir=$PDP_CONFDIR -Dorg.glite.authz.pdp.logdir=$PDP_LOGDIR $PDP_JOPTS"
+
+function executeAdminCommand {
+    ADMIN_HOST=`sed 's/ //g' $PDP_CONF | grep "^adminHost" | awk 'BEGIN {FS="="}{print $2}'`
+    if [ -z "$ADMIN_HOST" ] ; then
+       ADMIN_HOST="127.0.0.1"
+    fi
+
+    ADMIN_PORT=`sed 's/ //g' $PDP_CONF | grep "^adminPort" | awk 'BEGIN {FS="="}{print $2}'`
+    if [ -z "$ADMIN_PORT" ] ; then
+       ADMIN_PORT="8153"
+    fi
+    
+    ADMIN_PASS=`sed 's/ //g' $PDP_CONF | grep "^adminPassword" | awk 'BEGIN {FS="="}{print $2}'`
+    
+    $JAVACMD $PDP_JOPTS 'org.glite.authz.common.http.JettyAdminServiceCLI' $ADMIN_HOST $ADMIN_PORT $1 $ADMIN_PASS
+}
+
+function start {
+    # Run the PDP
+    $JAVACMD $PDP_JOPTS 'org.glite.authz.pdp.server.PDPDaemon' $PDP_CONF &
+}
+
+
+function print_help {
+   echo "PDP control script"
+   echo "Usage:"
+   echo "  $0 start   - start the PDP service"
+   echo "  $0 stop    - stop the PDP service" 
+   echo "  $0 status  - print PDP status"
+   echo "  $0 reloadPolicy - reload the PDP policies from the PAP"
+
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        executeAdminCommand 'shutdown' 
+        ;;
+    status) 
+        executeAdminCommand 'status'
+        ;;
+    reloadPolicy) 
+        executeAdminCommand 'reloadPolicy'
+        ;;
+    *) 
+        print_help 
+        exit 1
+        ;;
+esac
+exit $? 
+

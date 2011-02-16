@@ -1,0 +1,13 @@
+#
+# Options for the PEP server
+#
+#JAVACMD="/usr/bin/java"
+#PDP_JOPTS="-Djava.net.preferIPv4Stack=true"
+#PDP_HOME="/usr/share/argus/pdp"
+#PDP_CONF="/etc/argus/pdp/pdp.ini"
+#PDP_CONFDIR="/etc/argus/pdp"
+#PDP_LOGDIR="/var/log/argus/pdp"
+#PDP_LIBDIR="/var/lib/argus/pdp/lib"
+#PDP_ENDORSEDDIR="/var/lib/argus/pdp/lib/endorsed"
+
+
