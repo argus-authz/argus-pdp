@@ -64,11 +64,11 @@ case "$1" in
     status)
         $PDPCTL status
         ;;
-    reloadpolicies)
-        $PDPCTL clearResponseCache
+    reloadpolicy)
+        $PDPCTL reloadPolicy
         ;;
     *)
-        echo "Usage: $0 {start|stop|status|clearcache}"
+        echo "Usage: $0 {start|stop|status|reloadpolicy}"
         exit 1
         ;;
 esac
