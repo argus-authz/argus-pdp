@@ -1,0 +1,102 @@
+<!--
+    Copyright (c) Members of the EGEE Collaboration. 2006-2010.
+    See http://www.eu-egee.org/partners/ for details on the copyright holders.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!-- 
+Binary distribution with dependency jar files.
+Installed in a fakeroot directory structure.
+-->
+<assembly>
+    <id>fakeroot</id>
+    <formats>
+        <!-- <format>tar.gz</format> -->
+        <format>dir</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <!-- /var/lib/argus/pdp library and endorsed directories -->
+    <dependencySets>
+        <dependencySet>
+            <scope>compile</scope>
+            <outputDirectory>/var/lib/argus/pdp/lib</outputDirectory>
+            <includes>
+                <include>*:jar:*</include>
+            </includes>
+            <excludes>
+                <exclude>net.jcip:*</exclude>
+            </excludes>
+        </dependencySet>
+        <dependencySet>
+            <scope>runtime</scope>
+            <outputDirectory>/var/lib/argus/pdp/lib/endorsed</outputDirectory>
+            <includes>
+                <include>org.apache.xerces:*</include>
+                <include>org.apache.xalan:*</include>
+            </includes>
+        </dependencySet>
+    </dependencySets>
+    
+    <fileSets>
+        <!-- /usr/share/argus/pdp home directory -->
+        <fileSet>
+            <outputDirectory>/usr/share/argus/pdp</outputDirectory>
+            <directory>src/home-tmpl/empty-dir</directory>
+        </fileSet>
+        <!-- /etc/argus/pdp config directory -->
+        <fileSet>
+            <outputDirectory>/etc/argus/pdp</outputDirectory>
+            <directory>src/main/config</directory>
+            <fileMode>0640</fileMode>
+            <directoryMode>0750</directoryMode>
+        </fileSet>
+        <!-- /usr/sbin/pdpctl control script -->
+        <fileSet>
+            <outputDirectory>/usr/sbin</outputDirectory>
+            <directory>src/main/scripts/sbin</directory>
+            <fileMode>0750</fileMode>
+        </fileSet>
+        <!-- /etc/sysconfig/argus-pdp optional config -->
+        <fileSet>
+            <outputDirectory>/etc/sysconfig</outputDirectory>
+            <directory>src/main/scripts/sysconfig</directory>
+            <fileMode>0640</fileMode>
+        </fileSet>
+        <!-- /etc/rc.d/init.d startup script -->
+        <fileSet>
+            <outputDirectory>/etc/rc.d/init.d</outputDirectory>
+            <directory>src/main/scripts/init.d</directory>
+            <fileMode>0755</fileMode>
+        </fileSet>
+        <!-- /var/log/argus/pdp logging directory -->
+        <fileSet>
+            <outputDirectory>/var/log/argus/pdp</outputDirectory>
+            <directory>src/home-tmpl/empty-dir</directory>
+            <directoryMode>0750</directoryMode>
+        </fileSet>        
+        <!-- Documentation -->
+        <fileSet>
+            <outputDirectory>/usr/share/doc/argus/pdp</outputDirectory>
+            <directory>doc</directory>
+        </fileSet>
+        <!-- Javadoc -->
+        <!--
+        <fileSet>
+            <outputDirectory>/usr/share/doc/argus/pdp/api</outputDirectory>
+            <directory>target/site/apidocs</directory>
+        </fileSet>
+        -->
+    </fileSets>
+    
+</assembly>
