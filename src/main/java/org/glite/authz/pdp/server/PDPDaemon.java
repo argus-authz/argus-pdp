@@ -55,16 +55,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Main class of the PDP Daemon. This class kicks off the embedded Jetty server and shutdown service. It does not do any
- * of the request processing.
+ * Main class of the PDP Daemon. This class kicks off the embedded Jetty server
+ * and shutdown service. It does not do any of the request processing.
  */
 public final class PDPDaemon {
 
     /** System property name PDP_HOME path is bound to. */
-    public static final String PDP_HOME_PROP = "org.glite.authz.pdp.home";
+    public static final String PDP_HOME_PROP= "org.glite.authz.pdp.home";
+
+    /** System property name PDP_CONFDIR path is bound to. */
+    public static final String PDP_CONFDIR_PROP= "org.glite.authz.pdp.confdir";
+
+    /** System property name PDP_LOGDIR path is bound to. */
+    public static final String PDP_LOGDIR_PROP= "org.glite.authz.pdp.logdir";
+
+    /** Default admin port: {@value} */
+    public static int DEFAULT_ADMIN_PORT= 8153;
+
+    /** Default admin host: {@value} */
+    public static String DEFAULT_ADMIN_HOST= "127.0.0.1";
+
+    /** Default service port: {@value} */
+    public static int DEFAULT_SERVICE_PORT= 8152;
+
+    /** Default logging configuration refresh period: {@value} ms */
+    public static final int DEFAULT_LOGGING_CONFIG_REFRESH_PERIOD= 5 * 60 * 1000;
 
     /** Class logger. */
-    private static final Logger LOG = LoggerFactory.getLogger(PDPDaemon.class);
+    private static final Logger LOG= LoggerFactory.getLogger(PDPDaemon.class);
 
     /** Constructor. */
     private PDPDaemon() {
@@ -73,27 +91,38 @@ public final class PDPDaemon {
     /**
      * Entry point for starting the daemon.
      * 
-     * @param args command line arguments
+     * @param args
+     *            command line arguments
      * 
-     * @throws Exception thrown if there is a problem starting the daemon
+     * @throws Exception
+     *             thrown if there is a problem starting the daemon
      */
     public static void main(String[] args) throws Exception {
         if (args.length < 1 || args.length > 1) {
-            errorAndExit("Invalid configuration file", null);
+            errorAndExit("Missing configuration file argument", null);
         }
 
-        final Timer backgroundTaskTimer = new Timer(true);
+        String confDir= System.getProperty(PDP_CONFDIR_PROP);
+        if (confDir == null) {
+            errorAndExit("System property " + PDP_CONFDIR_PROP + " is not set",
+                         null);
+        }
 
-        initializeLogging(System.getProperty(PDP_HOME_PROP) + "/conf/logging.xml", backgroundTaskTimer);
+        final Timer backgroundTaskTimer= new Timer(true);
+
+        String loggingConfigFilePath= confDir + "/logging.xml";
+        initializeLogging(loggingConfigFilePath, backgroundTaskTimer);
+
         Security.addProvider(new BouncyCastleProvider());
         DefaultBootstrap.bootstrap();
         HerasAFBootstrap.bootstap();
 
-        PDPConfiguration daemonConfig = parseConfiguration(args[0]);
-        PolicyRepository policyRepository = PolicyRepository.instance(daemonConfig, backgroundTaskTimer);
-        
-        List<PolicyInformationPoint> pips = daemonConfig.getPolicyInformationPoints();
-        if(pips != null && !pips.isEmpty()){
+        PDPConfiguration daemonConfig= parseConfiguration(args[0]);
+        PolicyRepository policyRepository= PolicyRepository.instance(daemonConfig,
+                                                                     backgroundTaskTimer);
+
+        List<PolicyInformationPoint> pips= daemonConfig.getPolicyInformationPoints();
+        if (pips != null && !pips.isEmpty()) {
             for (PolicyInformationPoint pip : daemonConfig.getPolicyInformationPoints()) {
                 if (pip != null) {
                     LOG.debug("Starting PIP {}", pip.getId());
@@ -102,13 +131,16 @@ public final class PDPDaemon {
             }
         }
 
-        Server authzService = createDaemonService(daemonConfig, backgroundTaskTimer);
-        JettyRunThread pdpDaemonServiceThread = new JettyRunThread(authzService);
-        pdpDaemonServiceThread.setName("PDP AuthZ Service");
+        Server authzService= createDaemonService(daemonConfig,
+                                                 backgroundTaskTimer);
+        JettyRunThread pdpDaemonServiceThread= new JettyRunThread(authzService);
+        pdpDaemonServiceThread.setName("PDP Service");
         pdpDaemonServiceThread.start();
 
-        JettyAdminService adminService = createAdminService(daemonConfig, backgroundTaskTimer, policyRepository,
-                authzService);
+        JettyAdminService adminService= createAdminService(daemonConfig,
+                                                           backgroundTaskTimer,
+                                                           policyRepository,
+                                                           authzService);
         adminService.start();
 
         LOG.info(Version.getServiceIdentifier() + " started");
@@ -117,74 +149,92 @@ public final class PDPDaemon {
     /**
      * Creates the PDP daemon server.
      * 
-     * @param daemonConfig daemon configuration
-     * @param taskTimer task timer used to schedule various background tasks
+     * @param daemonConfig
+     *            daemon configuration
+     * @param taskTimer
+     *            task timer used to schedule various background tasks
      * 
      * @return the unstarted PDP daemon server
      */
-    private static Server createDaemonService(PDPConfiguration daemonConfig, Timer taskTimer) {
-        Server httpServer = new Server();
+    private static Server createDaemonService(PDPConfiguration daemonConfig,
+            Timer taskTimer) {
+        Server httpServer= new Server();
         httpServer.setSendServerVersion(false);
         httpServer.setSendDateHeader(false);
         httpServer.setGracefulShutdown(5000);
 
         BlockingQueue<Runnable> requestQueue;
         if (daemonConfig.getMaxRequestQueueSize() < 1) {
-            requestQueue = new LinkedBlockingQueue<Runnable>();
-        } else {
-            requestQueue = new ArrayBlockingQueue<Runnable>(daemonConfig.getMaxRequestQueueSize());
+            requestQueue= new LinkedBlockingQueue<Runnable>();
         }
-        ThreadPool threadPool = new ThreadPool(5, daemonConfig.getMaxRequests(), 1, TimeUnit.SECONDS, requestQueue);
+        else {
+            requestQueue= new ArrayBlockingQueue<Runnable>(daemonConfig.getMaxRequestQueueSize());
+        }
+        ThreadPool threadPool= new ThreadPool(5,
+                                              daemonConfig.getMaxRequests(),
+                                              1,
+                                              TimeUnit.SECONDS,
+                                              requestQueue);
         httpServer.setThreadPool(threadPool);
 
-        Connector connector = createServiceConnector(daemonConfig);
+        Connector connector= createServiceConnector(daemonConfig);
         httpServer.setConnectors(new Connector[] { connector });
 
-        Context servletContext = new Context(httpServer, "/", false, false);
+        Context servletContext= new Context(httpServer, "/", false, false);
         servletContext.setDisplayName("PDP Daemon");
         servletContext.setAttribute(PDPConfiguration.BINDING_NAME, daemonConfig);
-        servletContext.setAttribute(AuthorizationRequestServlet.TIMER_ATTRIB, taskTimer);
+        servletContext.setAttribute(AuthorizationRequestServlet.TIMER_ATTRIB,
+                                    taskTimer);
 
-        FilterHolder accessLoggingFilter = new FilterHolder(new AccessLoggingFilter());
+        FilterHolder accessLoggingFilter= new FilterHolder(new AccessLoggingFilter());
         servletContext.addFilter(accessLoggingFilter, "/*", Context.REQUEST);
 
-        ServletHolder daemonRequestServlet = new ServletHolder(new AuthorizationRequestServlet());
-        daemonRequestServlet.setName("PDP Daemon Servlet");
+        ServletHolder daemonRequestServlet= new ServletHolder(new AuthorizationRequestServlet());
+        daemonRequestServlet.setName("PDP Servlet");
         servletContext.addServlet(daemonRequestServlet, "/authz");
 
         return httpServer;
     }
 
     /**
-     * Builds an admin service for the PDP. This admin service has the following commands registered with it:
+     * Builds an admin service for the PDP. This admin service has the following
+     * commands registered with it:
      * 
      * <ul>
-     * <li><em>shutdown</em> - shuts down the PDP daemon service and the admin service</li>
+     * <li><em>shutdown</em> - shuts down the PDP daemon service and the admin
+     * service</li>
      * <li><em>status</em> - prints out a status page w/ metrics</li>
      * <li><em>reloadPolicy</em> - reloads the PDP policy</li>
      * </ul>
      * 
-     * @param daemonConfig PDP configuration
-     * @param backgroundTaskTimer timer used for background tasks
-     * @param policyRepository PDP policy repository
-     * @param daemonService the PDP daemon service
+     * @param daemonConfig
+     *            PDP configuration
+     * @param backgroundTaskTimer
+     *            timer used for background tasks
+     * @param policyRepository
+     *            PDP policy repository
+     * @param daemonService
+     *            the PDP daemon service
      * 
      * @return the admin service
      */
-    private static JettyAdminService createAdminService(PDPConfiguration daemonConfig, Timer backgroundTaskTimer,
+    private static JettyAdminService createAdminService(
+            PDPConfiguration daemonConfig, Timer backgroundTaskTimer,
             PolicyRepository policyRepository, Server daemonService) {
-        
-        String adminHost = daemonConfig.getAdminHost();
-        if(adminHost == null){
-            adminHost = "127.0.0.1";
-        }
-        
-        int adminPort = daemonConfig.getAdminPort();
-        if (adminPort < 1) {
-            adminPort = 8153;
+
+        String adminHost= daemonConfig.getAdminHost();
+        if (adminHost == null) {
+            adminHost= DEFAULT_ADMIN_HOST;
         }
 
-        JettyAdminService adminService = new JettyAdminService(adminHost, adminPort, daemonConfig.getAdminPassword());
+        int adminPort= daemonConfig.getAdminPort();
+        if (adminPort < 1) {
+            adminPort= DEFAULT_ADMIN_PORT;
+        }
+
+        JettyAdminService adminService= new JettyAdminService(adminHost,
+                                                              adminPort,
+                                                              daemonConfig.getAdminPassword());
 
         adminService.registerAdminCommand(new StatusCommand(daemonConfig.getServiceMetrics()));
         adminService.registerAdminCommand(new ReloadPolicyCommand(policyRepository));
@@ -198,29 +248,32 @@ public final class PDPDaemon {
     /**
      * Creates the HTTP connector used to receive authorization requests.
      * 
-     * @param daemonConfig the daemon configuration
+     * @param daemonConfig
+     *            the daemon configuration
      * 
      * @return the created connector
      */
-    private static Connector createServiceConnector(PDPConfiguration daemonConfig) {
+    private static Connector createServiceConnector(
+            PDPConfiguration daemonConfig) {
         Connector connector;
         if (!daemonConfig.isSslEnabled()) {
-            connector = new SelectChannelConnector();
-        } else {
+            connector= new SelectChannelConnector();
+        }
+        else {
             if (daemonConfig.getKeyManager() == null) {
-                LOG
-                        .error("Service port was meant to be SSL enabled but no service key/certificate was specified in the configuration file");
+                LOG.error("Service port was meant to be SSL enabled but no service key/certificate was specified in the configuration file");
             }
             if (daemonConfig.getTrustManager() == null) {
-                LOG
-                        .error("Service port was meant to be SSL enabled but no trust information directory was specified in the configuration file");
+                LOG.error("Service port was meant to be SSL enabled but no trust information directory was specified in the configuration file");
             }
-            connector = new JettySslSelectChannelConnector(daemonConfig.getKeyManager(), daemonConfig.getTrustManager());
+            connector= new JettySslSelectChannelConnector(daemonConfig.getKeyManager(),
+                                                          daemonConfig.getTrustManager());
         }
         connector.setHost(daemonConfig.getHostname());
         if (daemonConfig.getPort() == 0) {
-            connector.setPort(8152);
-        } else {
+            connector.setPort(DEFAULT_SERVICE_PORT);
+        }
+        else {
             connector.setPort(daemonConfig.getPort());
         }
         connector.setMaxIdleTime(daemonConfig.getConnectionTimeout());
@@ -233,26 +286,29 @@ public final class PDPDaemon {
     /**
      * Reads the configuration file and creates a configuration from it.
      * 
-     * @param configFilePath path to configuration file
+     * @param configFilePath
+     *            path to configuration file
      * 
      * @return configuration file and creates a configuration from it
      */
     private static PDPConfiguration parseConfiguration(String configFilePath) {
-        File configFile = null;
+        File configFile= null;
 
         try {
-            configFile = Files.getReadableFile(configFilePath);
+            configFile= Files.getReadableFile(configFilePath);
         } catch (IOException e) {
             errorAndExit(e.getMessage(), null);
         }
 
         try {
-            PDPIniConfigurationParser configParser = new PDPIniConfigurationParser();
+            PDPIniConfigurationParser configParser= new PDPIniConfigurationParser();
             return configParser.parse(new FileReader(configFile));
         } catch (IOException e) {
-            errorAndExit("Unable to read configuration file " + configFilePath, e);
+            errorAndExit("Unable to read configuration file " + configFilePath,
+                         e);
         } catch (ConfigurationException e) {
-            errorAndExit("Error parsing configuration file " + configFilePath, e);
+            errorAndExit("Error parsing configuration file " + configFilePath,
+                         e);
         }
         return null;
     }
@@ -260,8 +316,10 @@ public final class PDPDaemon {
     /**
      * Logs, as an error, the error message and exits the program.
      * 
-     * @param errorMessage error message
-     * @param e exception that caused it
+     * @param errorMessage
+     *            error message
+     * @param e
+     *            exception that caused it
      */
     private static void errorAndExit(String errorMessage, Exception e) {
         System.err.println(errorMessage);
@@ -275,16 +333,32 @@ public final class PDPDaemon {
     }
 
     /**
-     * Initializes the logging system and starts the process to watch for config file changes.
+     * Initializes the logging system and starts the process to watch for config
+     * file changes.
+     * <p>
+     * The function uses {@link #errorAndExit(String, Exception)} if the
+     * loggingConfigFilePath is a directory, does not exist, or can not be read
      * 
-     * @param loggingConfigFilePath path to the logging configuration file
-     * @param reloadTasks timer controlling the reloading of tasks
+     * 
+     * @param loggingConfigFilePath
+     *            path to the logging configuration file
+     * @param reloadTasks
+     *            timer controlling the reloading of tasks
      */
-    private static void initializeLogging(String loggingConfigFilePath, Timer reloadTasks) {
-        LoggingReloadTask reloadTask = new LoggingReloadTask(loggingConfigFilePath);
+    private static void initializeLogging(String loggingConfigFilePath,
+            Timer reloadTasks) {
+        LoggingReloadTask reloadTask= null;
+        try {
+            reloadTask= new LoggingReloadTask(loggingConfigFilePath);
+        } catch (IOException e) {
+            errorAndExit("Invalid logging configuration file: "
+                    + loggingConfigFilePath, e);
+        }
         // check/reload every 5 minutes
-        int refreshPeriod = 5 * 60 * 1000;
+        int refreshPeriod= DEFAULT_LOGGING_CONFIG_REFRESH_PERIOD;
         reloadTask.run();
-        reloadTasks.scheduleAtFixedRate(reloadTask, refreshPeriod, refreshPeriod);
+        reloadTasks.scheduleAtFixedRate(reloadTask,
+                                        refreshPeriod,
+                                        refreshPeriod);
     }
 }
