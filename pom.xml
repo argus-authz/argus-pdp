@@ -121,12 +121,6 @@
                     <mapping>
                         <!-- Java source files -->
                         <java>SLASHSTAR_STYLE</java>
-                        <!-- C source files -->
-                        <c>SLASHSTAR_STYLE</c>
-                        <h>SLASHSTAR_STYLE</h>
-                        <!-- automake and autoconf files -->
-                        <ac>SCRIPT_STYLE</ac>
-                        <am>SCRIPT_STYLE</am>
                         <!-- ini config files -->
                         <ini>SCRIPT_STYLE</ini>
                     </mapping>
@@ -135,7 +129,8 @@
                     </includes>
                     <excludes>
                         <exclude>**/resources/**</exclude>
-                        <exclude>**/credentials/**</exclude>
+                        <exclude>**/main/scripts/**</exclude>
+                        <exclude>**/package/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -154,7 +149,7 @@
                         <id>make-assembly</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>attached</goal>
+                            <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -241,6 +236,62 @@
             <id>etics</id>
             <build>
                 <finalName>pdp</finalName>
+            </build>
+        </profile>
+        <profile>
+            <id>EMI</id>
+            <build>
+                <finalName>pdp</finalName>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <!-- overwrite default descriptor to use -->
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/assembly/fakeroot.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.2</version>
+                        <executions>
+                            <execution>
+                                <id>create-emi-symlinks</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${project.build.directory}/pdp-fakeroot.dir</workingDirectory>
+                                    <executable>/bin/sh</executable>
+                                    <arguments>
+                                        <argument>${basedir}/src/script/package/emi-symlinks.sh</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>delete-emi-symlinks</id>
+                                <phase>pre-clean</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${project.build.directory}/pdp-fakeroot.dir</workingDirectory>
+                                    <executable>/bin/rm</executable>
+                                    <arguments>
+                                        <argument>-vf</argument>
+                                        <argument>usr/share/argus/pdp/conf</argument>
+                                        <argument>usr/share/argus/pdp/doc</argument>
+                                        <argument>usr/share/argus/pdp/lib</argument>
+                                        <argument>usr/share/argus/pdp/logs</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                         </executions>
+                    </plugin>
+                </plugins>
             </build>
         </profile>
     </profiles>
