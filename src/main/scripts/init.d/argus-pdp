@@ -32,6 +32,8 @@
 ###############################################################################
 # set -x
 
+NAME="$(basename $0)"
+
 # PDP server control script
 PDPCTL=/usr/sbin/pdpctl
 
@@ -41,18 +43,19 @@ if [ `id -u` -ne 0 ]; then
 fi 
 
 # source optional system configuration
-if [ -r /etc/sysconfig/argus-pdp ]; then
-   . /etc/sysconfig/argus-pdp
-   # export the variable for the $PEPDCTL script
-   [ -n "$JAVACMD" ] && export JAVACMD="$JAVACMD"
-   [ -n "$PDP_JOPTS" ] && export PDP_JOPTS="$PDP_JOPTS"
-   [ -n "$PDP_HOME" ] && export PDP_HOME="$PDP_HOME"
-   [ -n "$PDP_CONF" ] && export PDP_CONF="$PDP_CONF"
-   [ -n "$PDP_CONFDIR" ] && export PDP_CONFDIR="$PDP_CONFDIR"
-   [ -n "$PDP_LOGDIR" ] && export PDP_LOGDIR="$PDP_LOGDIR"
-   [ -n "$PDP_LIBDIR" ] && export PDP_LIBDIR="$PDP_LIBDIR"
-   [ -n "$PDP_ENDORSEDDIR" ] && export PDP_ENDORSEDDIR="$PDP_ENDORSEDDIR"
+if [ -r "/etc/sysconfig/$NAME" ]; then
+   . /etc/sysconfig/$NAME
 fi
+
+# export the variable for the $PEPDCTL script
+[ -n "$JAVACMD" ] && export JAVACMD="$JAVACMD"
+[ -n "$PDP_JOPTS" ] && export PDP_JOPTS="$PDP_JOPTS"
+[ -n "$PDP_HOME" ] && export PDP_HOME="$PDP_HOME"
+[ -n "$PDP_CONF" ] && export PDP_CONF="$PDP_CONF"
+[ -n "$PDP_CONFDIR" ] && export PDP_CONFDIR="$PDP_CONFDIR"
+[ -n "$PDP_LOGDIR" ] && export PDP_LOGDIR="$PDP_LOGDIR"
+[ -n "$PDP_LIBDIR" ] && export PDP_LIBDIR="$PDP_LIBDIR"
+[ -n "$PDP_ENDORSEDDIR" ] && export PDP_ENDORSEDDIR="$PDP_ENDORSEDDIR"
 
 case "$1" in
     start)
