@@ -48,7 +48,6 @@ import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallingException;
-import org.opensaml.xml.parse.BasicParserPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
@@ -58,26 +57,50 @@ import org.w3c.dom.Element;
 public class XACMLUtil {
 
     /** Class logger. */
-    private static final Logger LOG = LoggerFactory.getLogger(XACMLUtil.class);
+    private static final Logger LOG= LoggerFactory.getLogger(XACMLUtil.class);
 
     /** Pool used to parse XML. */
-    private static final BasicParserPool parser;
+//    private static final BasicParserPool parser;
+
+    @SuppressWarnings("unchecked")
+    private static SAMLObjectBuilder<XACMLAuthzDecisionStatementType> authzStatementBuilder= (SAMLObjectBuilder<XACMLAuthzDecisionStatementType>) Configuration.getBuilderFactory().getBuilder(XACMLAuthzDecisionStatementType.TYPE_NAME_XACML20);
+
+    @SuppressWarnings("unchecked")
+    private static XACMLObjectBuilder<ResponseType> xacmlResponseBuilder= (XACMLObjectBuilder<ResponseType>) Configuration.getBuilderFactory().getBuilder(ResponseType.DEFAULT_ELEMENT_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static XACMLObjectBuilder<DecisionType> decisionBuilder= (XACMLObjectBuilder<DecisionType>) Configuration.getBuilderFactory().getBuilder(org.opensaml.xacml.ctx.DecisionType.DEFAULT_ELEMENT_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static XACMLObjectBuilder<ResultType> resultBuilder= (XACMLObjectBuilder<ResultType>) Configuration.getBuilderFactory().getBuilder(ResultType.DEFAULT_ELEMENT_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static XACMLObjectBuilder<ObligationsType> obligationsBuilder= (XACMLObjectBuilder<ObligationsType>) Configuration.getBuilderFactory().getBuilder(ObligationsType.SCHEMA_TYPE_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static XACMLObjectBuilder<ObligationType> obligationBuilder= (XACMLObjectBuilder<ObligationType>) Configuration.getBuilderFactory().getBuilder(ObligationType.SCHEMA_TYPE_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static XACMLObjectBuilder<StatusCodeType> statusCodeBuilder= (XACMLObjectBuilder<StatusCodeType>) Configuration.getBuilderFactory().getBuilder(StatusCodeType.DEFAULT_ELEMENT_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static XACMLObjectBuilder<StatusType> statusBuilder= (XACMLObjectBuilder<StatusType>) Configuration.getBuilderFactory().getBuilder(StatusType.DEFAULT_ELEMENT_NAME);
 
     /**
      * Builds an authorization decision statement.
      * 
-     * @param authzRequest original authorization request context, or null if it is not to be returned in the response
-     * @param authzResponse the authorization decision response
+     * @param authzRequest
+     *            original authorization request context, or null if it is not
+     *            to be returned in the response
+     * @param authzResponse
+     *            the authorization decision response
      * 
      * @return the constructed authorization decision statement
      */
-    @SuppressWarnings("unchecked")
-    public static XACMLAuthzDecisionStatementType buildAuthZDecisionStatement(RequestType authzRequest,
-            ResponseType authzResponse) {
-        SAMLObjectBuilder<XACMLAuthzDecisionStatementType> authzStatementBuilder = (SAMLObjectBuilder<XACMLAuthzDecisionStatementType>) Configuration
-                .getBuilderFactory().getBuilder(XACMLAuthzDecisionStatementType.TYPE_NAME_XACML20);
-        XACMLAuthzDecisionStatementType authzStatement = authzStatementBuilder.buildObject(
-                Statement.DEFAULT_ELEMENT_NAME, XACMLAuthzDecisionStatementType.TYPE_NAME_XACML20);
+    public static XACMLAuthzDecisionStatementType buildAuthZDecisionStatement(
+            RequestType authzRequest, ResponseType authzResponse) {
+        XACMLAuthzDecisionStatementType authzStatement= authzStatementBuilder.buildObject(Statement.DEFAULT_ELEMENT_NAME,
+                                                                                          XACMLAuthzDecisionStatementType.TYPE_NAME_XACML20);
         authzStatement.setRequest(authzRequest);
         authzStatement.setResponse(authzResponse);
         return authzStatement;
@@ -86,33 +109,36 @@ public class XACMLUtil {
     /**
      * Builds a request type corresponding to the original XACML request.
      * 
-     * @param authzRequest the original authorization request
+     * @param authzRequest
+     *            the original authorization request
      * 
      * @return the constructed request or null if no return context was required
      */
-    public static RequestType buildRequest(XACMLAuthzDecisionQueryType authzRequest) {
+    public static RequestType buildRequest(
+            XACMLAuthzDecisionQueryType authzRequest) {
         if (!authzRequest.isReturnContext()) {
             return null;
         }
 
-        Element requestElem = authzRequest.getRequest().getDOM();
+        Element requestElem= authzRequest.getRequest().getDOM();
         if (requestElem == null) {
-            Marshaller marshaller = Configuration.getMarshallerFactory().getMarshaller(authzRequest);
+            Marshaller marshaller= Configuration.getMarshallerFactory().getMarshaller(authzRequest);
             try {
-                requestElem = marshaller.marshall(authzRequest);
+                requestElem= marshaller.marshall(authzRequest);
             } catch (MarshallingException e) {
                 LOG.error("Unable to marshall XACML request context", e);
                 return null;
             }
         }
 
-        Element requestElemClone = (Element) requestElem.cloneNode(true);
-        Unmarshaller unmarshaller = Configuration.getUnmarshallerFactory().getUnmarshaller(requestElem);
+        Element requestElemClone= (Element) requestElem.cloneNode(true);
+        Unmarshaller unmarshaller= Configuration.getUnmarshallerFactory().getUnmarshaller(requestElem);
         try {
-            RequestType xacmlRequest = (RequestType) unmarshaller.unmarshall(requestElemClone);
+            RequestType xacmlRequest= (RequestType) unmarshaller.unmarshall(requestElemClone);
             return xacmlRequest;
         } catch (UnmarshallingException e) {
-            LOG.error("Error unmarshalling clone of XACML request context element", e);
+            LOG.error("Error unmarshalling clone of XACML request context element",
+                      e);
             return null;
         }
     }
@@ -120,15 +146,13 @@ public class XACMLUtil {
     /**
      * Creates a XACML response message.
      * 
-     * @param result the result of the request
+     * @param result
+     *            the result of the request
      * 
      * @return the constructed response
      */
-    @SuppressWarnings("unchecked")
     public static ResponseType buildResponse(ResultType result) {
-        XACMLObjectBuilder<ResponseType> xacmlResponseBuilder = (XACMLObjectBuilder<ResponseType>) Configuration
-                .getBuilderFactory().getBuilder(ResponseType.DEFAULT_ELEMENT_NAME);
-        ResponseType response = xacmlResponseBuilder.buildObject();
+        ResponseType response= xacmlResponseBuilder.buildObject();
         response.setResult(result);
         return response;
     }
@@ -136,25 +160,24 @@ public class XACMLUtil {
     /**
      * Creates a Result.
      * 
-     * @param resourceId ID of the resource
-     * @param decision result decision
-     * @param obligationCollection result obligations
-     * @param status result status
+     * @param resourceId
+     *            ID of the resource
+     * @param decision
+     *            result decision
+     * @param obligationCollection
+     *            result obligations
+     * @param status
+     *            result status
      * 
      * @return the constructed result
      */
-    @SuppressWarnings("unchecked")
     public static ResultType buildResult(String resourceId, DECISION decision,
             List<ObligationType> obligationCollection, StatusType status) {
-        XACMLObjectBuilder<DecisionType> decisionBuilder = (XACMLObjectBuilder<DecisionType>) Configuration
-                .getBuilderFactory().getBuilder(org.opensaml.xacml.ctx.DecisionType.DEFAULT_ELEMENT_NAME);
 
-        DecisionType xacmlDecision = decisionBuilder.buildObject();
+        DecisionType xacmlDecision= decisionBuilder.buildObject();
         xacmlDecision.setDecision(decision);
 
-        XACMLObjectBuilder<ResultType> resultBuilder = (XACMLObjectBuilder<ResultType>) Configuration
-                .getBuilderFactory().getBuilder(ResultType.DEFAULT_ELEMENT_NAME);
-        ResultType result = resultBuilder.buildObject();
+        ResultType result= resultBuilder.buildObject();
 
         result.setResourceId(Strings.safeTrimOrNullString(resourceId));
 
@@ -162,9 +185,7 @@ public class XACMLUtil {
         result.setStatus(status);
 
         if (obligationCollection != null && !obligationCollection.isEmpty()) {
-            XACMLObjectBuilder<ObligationsType> obligationsBuilder = (XACMLObjectBuilder<ObligationsType>) Configuration
-                    .getBuilderFactory().getBuilder(ObligationsType.SCHEMA_TYPE_NAME);
-            ObligationsType obligations = obligationsBuilder.buildObject();
+            ObligationsType obligations= obligationsBuilder.buildObject();
             obligations.getObligations().addAll(obligationCollection);
             result.setObligations(obligations);
         }
@@ -175,35 +196,36 @@ public class XACMLUtil {
     /**
      * Transforms a HERAS obligation in to an OpenSAML obligation.
      * 
-     * <em>NOTE:</em> Obligations with attribute assignments are not currently supported.
+     * <em>NOTE:</em> Obligations with attribute assignments are not currently
+     * supported.
      * 
-     * @param herasObligation HERAS obligation to be transformed
+     * @param herasObligation
+     *            HERAS obligation to be transformed
      * 
      * @return the OpenSAML obligation
      */
-    @SuppressWarnings("unchecked")
-    public static ObligationType buildObligation(org.herasaf.xacml.core.policy.impl.ObligationType herasObligation) {
+    public static ObligationType buildObligation(
+            org.herasaf.xacml.core.policy.impl.ObligationType herasObligation) {
         if (herasObligation == null) {
             return null;
         }
 
-        if (herasObligation.getAttributeAssignments() != null && !herasObligation.getAttributeAssignments().isEmpty()) {
+        if (herasObligation.getAttributeAssignments() != null
+                && !herasObligation.getAttributeAssignments().isEmpty()) {
             LOG.error("Obligations with attribute assignments are nor currently supported");
             return null;
         }
 
-        XACMLObjectBuilder<ObligationType> obligationBuilder = (XACMLObjectBuilder<ObligationType>) Configuration
-                .getBuilderFactory().getBuilder(ObligationType.SCHEMA_TYPE_NAME);
-        ObligationType obligation = obligationBuilder.buildObject();
+        ObligationType obligation= obligationBuilder.buildObject();
 
         obligation.setObligationId(herasObligation.getObligationId());
         switch (herasObligation.getFulfillOn()) {
-            case DENY:
-                obligation.setFulfillOn(EffectType.Deny);
-                break;
-            case PERMIT:
-                obligation.setFulfillOn(EffectType.Permit);
-                break;
+        case DENY:
+            obligation.setFulfillOn(EffectType.Deny);
+            break;
+        case PERMIT:
+            obligation.setFulfillOn(EffectType.Permit);
+            break;
         }
 
         // TODO attribute assignement
@@ -214,20 +236,16 @@ public class XACMLUtil {
     /**
      * Creates a status.
      * 
-     * @param statusCodeValue value of the {@link StatusCodeType}
+     * @param statusCodeValue
+     *            value of the {@link StatusCodeType}
      * 
      * @return the constructed status
      */
-    @SuppressWarnings("unchecked")
     public static StatusType buildStatus(String statusCodeValue) {
-        XACMLObjectBuilder<StatusCodeType> statusCodeBuilder = (XACMLObjectBuilder<StatusCodeType>) Configuration
-                .getBuilderFactory().getBuilder(StatusCodeType.DEFAULT_ELEMENT_NAME);
-        StatusCodeType statusCode = statusCodeBuilder.buildObject();
+        StatusCodeType statusCode= statusCodeBuilder.buildObject();
         statusCode.setValue(statusCodeValue);
 
-        XACMLObjectBuilder<StatusType> statusBuilder = (XACMLObjectBuilder<StatusType>) Configuration
-                .getBuilderFactory().getBuilder(StatusType.DEFAULT_ELEMENT_NAME);
-        StatusType status = statusBuilder.buildObject();
+        StatusType status= statusBuilder.buildObject();
         status.setStatusCode(statusCode);
 
         return status;
@@ -236,9 +254,11 @@ public class XACMLUtil {
     /**
      * Marshalls a JAX element.
      * 
-     * @param jaxbElement element to marshall
+     * @param jaxbElement
+     *            element to marshall
      * 
-     * @return the marshalled form of the element or null if he element could not be marshalled
+     * @return the marshalled form of the element or null if he element could
+     *         not be marshalled
      */
     public static String marshall(Object jaxbElement) {
         if (jaxbElement == null) {
@@ -246,20 +266,23 @@ public class XACMLUtil {
         }
 
         try {
-            javax.xml.bind.Marshaller marshaller = ContextAndPolicy.getMarshaller(JAXBProfile.POLICY);
-            marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FRAGMENT, true);
-            StringWriter writer = new StringWriter();
+            javax.xml.bind.Marshaller marshaller= ContextAndPolicy.getMarshaller(JAXBProfile.POLICY);
+            marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT,
+                                   true);
+            marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FRAGMENT,
+                                   true);
+            StringWriter writer= new StringWriter();
             marshaller.marshal(jaxbElement, writer);
             return writer.toString();
         } catch (JAXBException e) {
-            LOG.error("Unable to log policy to be used for authorization decision", e);
+            LOG.error("Unable to log policy to be used for authorization decision",
+                      e);
             return null;
         }
     }
 
-    static {
-        parser = new BasicParserPool();
-        parser.setMaxPoolSize(50);
-    }
+//    static {
+//        parser= new BasicParserPool();
+//        parser.setMaxPoolSize(50);
+//    }
 }
