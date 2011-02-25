@@ -43,6 +43,9 @@ import org.glite.authz.pdp.config.PDPConfiguration;
 import org.glite.authz.pdp.config.PDPIniConfigurationParser;
 import org.glite.authz.pdp.pip.PolicyInformationPoint;
 import org.glite.authz.pdp.policy.PolicyRepository;
+import org.glite.authz.pdp.util.SAMLUtil;
+import org.glite.authz.pdp.util.XACMLUtil;
+
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
@@ -116,6 +119,10 @@ public final class PDPDaemon {
         Security.addProvider(new BouncyCastleProvider());
         DefaultBootstrap.bootstrap();
         HerasAFBootstrap.bootstap();
+        
+        // speed optimization
+        SAMLUtil.bootstrap();
+        XACMLUtil.bootstrap();
 
         PDPConfiguration daemonConfig= parseConfiguration(args[0]);
         PolicyRepository policyRepository= PolicyRepository.instance(daemonConfig,
