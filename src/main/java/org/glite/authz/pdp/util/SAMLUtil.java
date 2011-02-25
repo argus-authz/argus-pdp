@@ -60,6 +60,10 @@ public class SAMLUtil {
     @SuppressWarnings("unchecked")
     private static SAMLObjectBuilder<Status> statusBuilder= (SAMLObjectBuilder<Status>) Configuration.getBuilderFactory().getBuilder(Status.DEFAULT_ELEMENT_NAME);
 
+    public static void bootstrap() {
+        // nothing to do, just load the class
+    }
+    
     /**
      * Creates a SAML response message.
      * 

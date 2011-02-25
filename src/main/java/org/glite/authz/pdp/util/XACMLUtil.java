@@ -86,6 +86,10 @@ public class XACMLUtil {
     @SuppressWarnings("unchecked")
     private static XACMLObjectBuilder<StatusType> statusBuilder= (XACMLObjectBuilder<StatusType>) Configuration.getBuilderFactory().getBuilder(StatusType.DEFAULT_ELEMENT_NAME);
 
+    public static void bootstrap() {
+        // nothing to do, load the class
+    }
+    
     /**
      * Builds an authorization decision statement.
      * 
