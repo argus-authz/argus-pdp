@@ -157,6 +157,7 @@ public class SAMLUtil {
     static {
         try {
             idgen= new SecureRandomIdentifierGenerator();
+            idgen.generateIdentifier();
         } catch (NoSuchAlgorithmException e) {
             // JVMs are required to support the default ID generation algorithm
         }
