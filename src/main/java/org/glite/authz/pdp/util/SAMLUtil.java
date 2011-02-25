@@ -42,22 +42,42 @@ public class SAMLUtil {
     /** Message ID generator. */
     private static IdentifierGenerator idgen;
 
+    @SuppressWarnings("unchecked")
+    private static SAMLObjectBuilder<Response> samlResponseBuilder= (SAMLObjectBuilder<Response>) Configuration.getBuilderFactory().getBuilder(Response.DEFAULT_ELEMENT_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static SAMLObjectBuilder<Assertion> assertionBuilder= (SAMLObjectBuilder<Assertion>) Configuration.getBuilderFactory().getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static SAMLObjectBuilder<Issuer> issuerBuilder= (SAMLObjectBuilder<Issuer>) Configuration.getBuilderFactory().getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static SAMLObjectBuilder<StatusCode> statusCodeBuilder= (SAMLObjectBuilder<StatusCode>) Configuration.getBuilderFactory().getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static SAMLObjectBuilder<StatusMessage> statusMessageBuilder= (SAMLObjectBuilder<StatusMessage>) Configuration.getBuilderFactory().getBuilder(StatusMessage.DEFAULT_ELEMENT_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static SAMLObjectBuilder<Status> statusBuilder= (SAMLObjectBuilder<Status>) Configuration.getBuilderFactory().getBuilder(Status.DEFAULT_ELEMENT_NAME);
+
     /**
      * Creates a SAML response message.
      * 
-     * @param inResponseTo ID of request to which this response corresponds
-     * @param issueInstant issue instant of the response
-     * @param assertion assertion contained in the response
-     * @param status status of the response
+     * @param inResponseTo
+     *            ID of request to which this response corresponds
+     * @param issueInstant
+     *            issue instant of the response
+     * @param assertion
+     *            assertion contained in the response
+     * @param status
+     *            status of the response
      * 
      * @return the constructed response
      */
-    @SuppressWarnings("unchecked")
-    public static Response buildSAMLResponse(String inResponseTo, DateTime issueInstant, Assertion assertion,
-            Status status) {
-        SAMLObjectBuilder<Response> samlResponseBuilder = (SAMLObjectBuilder<Response>) Configuration
-                .getBuilderFactory().getBuilder(Response.DEFAULT_ELEMENT_NAME);
-        Response samlResponse = samlResponseBuilder.buildObject();
+    public static Response buildSAMLResponse(String inResponseTo,
+            DateTime issueInstant, Assertion assertion, Status status) {
+
+        Response samlResponse= samlResponseBuilder.buildObject();
         samlResponse.setID(idgen.generateIdentifier());
         samlResponse.setInResponseTo(inResponseTo);
         samlResponse.setIssueInstant(issueInstant);
@@ -70,19 +90,20 @@ public class SAMLUtil {
     /**
      * Creates a SAML assertion.
      * 
-     * @param issuerEntityId ID of the assertion issuer
-     * @param issueInstant issue instant of the assertions
-     * @param authzDecisionStatement authorization decision statement contained in the assertion
+     * @param issuerEntityId
+     *            ID of the assertion issuer
+     * @param issueInstant
+     *            issue instant of the assertions
+     * @param authzDecisionStatement
+     *            authorization decision statement contained in the assertion
      * 
      * @return the constructed assertion
      */
-    @SuppressWarnings("unchecked")
-    public static Assertion buildAssertion(String issuerEntityId, DateTime issueInstant,
+    public static Assertion buildAssertion(String issuerEntityId,
+            DateTime issueInstant,
             XACMLAuthzDecisionStatementType authzDecisionStatement) {
-        SAMLObjectBuilder<Assertion> assertionBuilder = (SAMLObjectBuilder<Assertion>) Configuration
-                .getBuilderFactory().getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
 
-        Assertion assertion = assertionBuilder.buildObject();
+        Assertion assertion= assertionBuilder.buildObject();
         assertion.setID(idgen.generateIdentifier());
         assertion.setIssueInstant(issueInstant);
         assertion.setIssuer(buildIssuer(issuerEntityId));
@@ -93,15 +114,13 @@ public class SAMLUtil {
     /**
      * Builds the Issuer of a SAML message/assertion.
      * 
-     * @param entityId entity ID of the issuer
+     * @param entityId
+     *            entity ID of the issuer
      * 
      * @return the constructed issuer
      */
-    @SuppressWarnings("unchecked")
     public static Issuer buildIssuer(String entityId) {
-        SAMLObjectBuilder<Issuer> issuerBuilder = (SAMLObjectBuilder<Issuer>) Configuration.getBuilderFactory()
-                .getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
-        Issuer issuer = issuerBuilder.buildObject();
+        Issuer issuer= issuerBuilder.buildObject();
         issuer.setFormat(Issuer.ENTITY);
         issuer.setValue(entityId);
         return issuer;
@@ -110,29 +129,25 @@ public class SAMLUtil {
     /**
      * Builds a status object.
      * 
-     * @param statusCodeValue {@link StatusCode} value
-     * @param statusMessageValue {@link StatusMessage} value
+     * @param statusCodeValue
+     *            {@link StatusCode} value
+     * @param statusMessageValue
+     *            {@link StatusMessage} value
      * 
      * @return the constructed status
      */
-    @SuppressWarnings("unchecked")
-    public static Status buildStatus(String statusCodeValue, String statusMessageValue) {
-        SAMLObjectBuilder<StatusCode> statusCodeBuilder = (SAMLObjectBuilder<StatusCode>) Configuration
-                .getBuilderFactory().getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
-        StatusCode statusCode = statusCodeBuilder.buildObject();
+    public static Status buildStatus(String statusCodeValue,
+            String statusMessageValue) {
+        StatusCode statusCode= statusCodeBuilder.buildObject();
         statusCode.setValue(statusCodeValue);
 
-        StatusMessage statusMessage = null;
+        StatusMessage statusMessage= null;
         if (!Strings.isEmpty(statusMessageValue)) {
-            SAMLObjectBuilder<StatusMessage> statusMessageBuilder = (SAMLObjectBuilder<StatusMessage>) Configuration
-                    .getBuilderFactory().getBuilder(StatusMessage.DEFAULT_ELEMENT_NAME);
-            statusMessage = statusMessageBuilder.buildObject();
+            statusMessage= statusMessageBuilder.buildObject();
             statusMessage.setMessage(statusMessageValue);
         }
 
-        SAMLObjectBuilder<Status> statusBuilder = (SAMLObjectBuilder<Status>) Configuration.getBuilderFactory()
-                .getBuilder(Status.DEFAULT_ELEMENT_NAME);
-        Status status = statusBuilder.buildObject();
+        Status status= statusBuilder.buildObject();
         status.setStatusCode(statusCode);
         status.setStatusMessage(statusMessage);
 
@@ -141,7 +156,7 @@ public class SAMLUtil {
 
     static {
         try {
-            idgen = new SecureRandomIdentifierGenerator();
+            idgen= new SecureRandomIdentifierGenerator();
         } catch (NoSuchAlgorithmException e) {
             // JVMs are required to support the default ID generation algorithm
         }
