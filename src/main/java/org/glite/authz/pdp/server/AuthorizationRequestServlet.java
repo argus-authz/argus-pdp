@@ -424,16 +424,22 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
     protected Response buildSAMLResponse(
             AuthzRequestMessageContext messageContext) {
 
+        log.debug("Building XACML request");
         org.opensaml.xacml.ctx.RequestType request= XACMLUtil.buildRequest(messageContext.getInboundSAMLMessage());
+        
+        log.debug("Building XACML response");
         ResponseType response= XACMLUtil.buildResponse(messageContext.getAuthorizationResult());
 
+        log.debug("Building XACML authz statement");
         XACMLAuthzDecisionStatementType authzStatement= XACMLUtil.buildAuthZDecisionStatement(request,
                                                                                               response);
 
+        log.debug("Building SAML assertion");
         Assertion samlAssertion= SAMLUtil.buildAssertion(pdpConfig.getEntityId(),
                                                          messageContext.getOutboundSAMLMessageIssueInstant(),
                                                          authzStatement);
 
+        log.debug("Building SAML response");
         return SAMLUtil.buildSAMLResponse(messageContext.getInboundSAMLMessageId(),
                                           messageContext.getOutboundSAMLMessageIssueInstant(),
                                           samlAssertion,
