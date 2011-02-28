@@ -173,7 +173,7 @@
                             <manifestSection>
                                 <name>org/glite/authz/pdp/server/</name>
                                 <manifestEntries>
-                                    <Implementation-Title>${pom.artifactId}</Implementation-Title>
+                                    <Implementation-Title>${project.name}</Implementation-Title>
                                     <Implementation-Version>${pom.version}</Implementation-Version>
                                     <Implementation-Vendor>EGEE Collaboration</Implementation-Vendor>
                                 </manifestEntries>
