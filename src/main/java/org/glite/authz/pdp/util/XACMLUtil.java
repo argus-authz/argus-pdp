@@ -60,7 +60,7 @@ public class XACMLUtil {
     private static final Logger LOG= LoggerFactory.getLogger(XACMLUtil.class);
 
     /** Pool used to parse XML. */
-//    private static final BasicParserPool parser;
+    // private static final BasicParserPool parser;
 
     @SuppressWarnings("unchecked")
     private static SAMLObjectBuilder<XACMLAuthzDecisionStatementType> authzStatementBuilder= (SAMLObjectBuilder<XACMLAuthzDecisionStatementType>) Configuration.getBuilderFactory().getBuilder(XACMLAuthzDecisionStatementType.TYPE_NAME_XACML20);
@@ -86,10 +86,13 @@ public class XACMLUtil {
     @SuppressWarnings("unchecked")
     private static XACMLObjectBuilder<StatusType> statusBuilder= (XACMLObjectBuilder<StatusType>) Configuration.getBuilderFactory().getBuilder(StatusType.DEFAULT_ELEMENT_NAME);
 
+    /**
+     * Bootstraps the underlying object builders.
+     */
     public static void bootstrap() {
         // nothing to do, load the class
     }
-    
+
     /**
      * Builds an authorization decision statement.
      * 
@@ -285,8 +288,4 @@ public class XACMLUtil {
         }
     }
 
-//    static {
-//        parser= new BasicParserPool();
-//        parser.setMaxPoolSize(50);
-//    }
 }
