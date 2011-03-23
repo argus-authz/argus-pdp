@@ -64,6 +64,11 @@ case "$1" in
     stop)
         $PDPCTL stop
         ;;
+    restart)
+        $PDPCTL stop
+        sleep 5
+        $PDPCTL start
+        ;;
     status)
         $PDPCTL status
         ;;
@@ -71,7 +76,7 @@ case "$1" in
         $PDPCTL reloadPolicy
         ;;
     *)
-        echo "Usage: $0 {start|stop|status|reloadpolicy}"
+        echo "Usage: $0 {start|stop|restart|status|reloadpolicy}"
         exit 1
         ;;
 esac
