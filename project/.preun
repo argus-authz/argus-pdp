@@ -1,1 +1,2 @@
-/etc/init.d/argus-pdp forcestop
+/etc/init.d/argus-pdp stop
+exit 0
