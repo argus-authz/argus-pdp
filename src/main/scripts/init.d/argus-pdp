@@ -64,6 +64,10 @@ case "$1" in
     stop)
         $PDPCTL stop
         ;;
+    forcestop)
+        $PDPCTL stop
+        exit 0
+        ;;
     restart)
         $PDPCTL stop
         sleep 5
