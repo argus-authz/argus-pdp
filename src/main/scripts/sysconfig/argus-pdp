@@ -2,7 +2,10 @@
 # Options for the Argus PDP service
 #
 #JAVACMD="/usr/bin/java"
-#PDP_JOPTS="-Djava.net.preferIPv4Stack=true"
+# IPv4 instead of IPv6
+#PEPD_JOPTS="-Djava.net.preferIPv4Stack=true"
+# Max memory: 384MB
+PEPD_JOPTS="-Xmx384M"
 #PDP_HOME="/usr/share/argus/pdp"
 #PDP_CONF="/etc/argus/pdp/pdp.ini"
 #PDP_CONFDIR="/etc/argus/pdp"
