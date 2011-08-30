@@ -1,1 +1,4 @@
 /etc/init.d/argus-pdp stop 2>&1 /dev/null || :
+rm -f /var/lib/argus/pdp/lib/endorsed/*.jar 
+rm -f /var/lib/argus/pdp/lib/*.jar
+
