@@ -63,6 +63,10 @@ if [ ! -d "$PDP_ENDORSEDDIR" ]; then
     echo "$0: ERROR: $PDP_ENDORSEDDIR does not exist"
     exit 1
 fi
+# set default max memory
+if [ -z "$PDP_JOPTS" ]; then
+    PDP_JOPTS="-Xmx256M"
+fi
 # set the mandatory endorsed dir and the classpath
 PDP_JOPTS="-Djava.endorsed.dirs=$PDP_ENDORSEDDIR -classpath $LOCALCLASSPATH $PDP_JOPTS"
 
