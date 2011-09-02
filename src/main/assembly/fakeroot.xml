@@ -55,44 +55,44 @@ Installed in a fakeroot directory structure.
     <fileSets>
         <!-- /usr/share/argus/pdp home directory -->
         <fileSet>
-            <outputDirectory>/usr/share/argus/pdp</outputDirectory>
             <directory>src/home-tmpl/empty-dir</directory>
+            <outputDirectory>/usr/share/argus/pdp</outputDirectory>
         </fileSet>
         <!-- /etc/argus/pdp config directory -->
         <fileSet>
-            <outputDirectory>/etc/argus/pdp</outputDirectory>
             <directory>src/main/config</directory>
+            <outputDirectory>/etc/argus/pdp</outputDirectory>
             <fileMode>0640</fileMode>
             <directoryMode>0750</directoryMode>
         </fileSet>
         <!-- /usr/sbin/pdpctl control script -->
         <fileSet>
-            <outputDirectory>/usr/sbin</outputDirectory>
             <directory>src/main/scripts/sbin</directory>
+            <outputDirectory>/usr/sbin</outputDirectory>
             <fileMode>0750</fileMode>
         </fileSet>
         <!-- /etc/sysconfig/argus-pdp optional config -->
         <fileSet>
-            <outputDirectory>/etc/sysconfig</outputDirectory>
             <directory>src/main/scripts/sysconfig</directory>
+            <outputDirectory>/etc/sysconfig</outputDirectory>
             <fileMode>0640</fileMode>
         </fileSet>
         <!-- /etc/rc.d/init.d startup script -->
         <fileSet>
-            <outputDirectory>/etc/rc.d/init.d</outputDirectory>
             <directory>src/main/scripts/init.d</directory>
+            <outputDirectory>/etc/rc.d/init.d</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
         <!-- /var/log/argus/pdp logging directory -->
         <fileSet>
-            <outputDirectory>/var/log/argus/pdp</outputDirectory>
             <directory>src/home-tmpl/empty-dir</directory>
+            <outputDirectory>/var/log/argus/pdp</outputDirectory>
             <directoryMode>0750</directoryMode>
         </fileSet>        
         <!-- Documentation -->
         <fileSet>
-            <outputDirectory>/usr/share/doc/argus/pdp</outputDirectory>
             <directory>doc</directory>
+            <outputDirectory>/usr/share/doc/argus/pdp</outputDirectory>
             <fileMode>0644</fileMode>
         </fileSet>
         <!-- Javadoc -->
