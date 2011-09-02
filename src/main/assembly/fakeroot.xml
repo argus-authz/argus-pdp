@@ -93,6 +93,7 @@ Installed in a fakeroot directory structure.
         <fileSet>
             <outputDirectory>/usr/share/doc/argus/pdp</outputDirectory>
             <directory>doc</directory>
+            <fileMode>0644</fileMode>
         </fileSet>
         <!-- Javadoc -->
         <!--
