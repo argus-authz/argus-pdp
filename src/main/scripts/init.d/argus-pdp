@@ -17,24 +17,59 @@
 #
 # Startup script for PDP server
 #
-# chkconfig: 345 97 97
-#
-# description:  PDP server startup script
-#
-# processname: pdp
+### BEGIN INIT INFO
+# Provides:          argus-pdp
+# Required-Start:    $network $remote_fs argus-pap
+# Required-Stop:     $network $remote_fs argus-pap
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start pdp at boot time
+# Description:       Provides the PDP server function of the Argus-service
+### END INIT INFO
 #
 # Author(s): Maria Alandes Pradillo <yaim-contact@cern.ch>
 #            Valery Tschopp <argus-support@cern.ch>
+#            Joel Casutt <argus-support@cern.ch>
 #
-# Version: V1.3
+# Version: V2.0
 #
-# Date: 11/02/2011
+# Date: 10/10/2011
 ###############################################################################
 # set -x
 
-NAME="$(basename $0)"
+# Source functions Library
+if [ -r /lib/lsb/init-functions ]; then
+    . /lib/lsb/init-functions
+else
+    echo "/lib/lsb/init-functions must be present to run this script"
+    exit 1
+fi
 
-# PDP server control script
+# A check-variable for the state of the lock and pid-file
+RETURN_CODE="0"
+
+NAME="$(basename $0)"
+PDP_PROG="${NAME}"
+SHUTDOWN_WAIT=10
+HAS_LOCK=0
+PDP_LOCK=
+
+# See if there is an appropriate location for the lock-file, if not, do not use a lock-file
+if [ -d /var/lock/subsys ]; then
+    PDP_LOCK="/var/lock/subsys/${NAME}"
+    HAS_LOCK=1
+elif [ -d /var/lock ]; then
+    PDP_LOCK="/var/lock/${NAME}"
+    HAS_LOCK=1
+fi
+
+PDP_PID="/var/run/${NAME}.pid"
+
+
+# Preparation for multios-support
+# DISTRIB_ID=`lsb_release -i -s 2>/dev/null`
+
+# PEP server control script
 PDPCTL=/usr/sbin/pdpctl
 
 if [ `id -u` -ne 0 ]; then
@@ -43,43 +78,172 @@ if [ `id -u` -ne 0 ]; then
 fi 
 
 # source optional system configuration
-if [ -r "/etc/sysconfig/$NAME" ]; then
-   . /etc/sysconfig/$NAME
+if [ -r /etc/sysconfig/argus-pdp ]; then
+    # Auto-export variables to subsequent scripts
+    set -a
+    source /etc/sysconfig/argus-pdp
 fi
 
-# export the variable for the $PEPDCTL script
-[ -n "$JAVACMD" ] && export JAVACMD="$JAVACMD"
-[ -n "$PDP_JOPTS" ] && export PDP_JOPTS="$PDP_JOPTS"
-[ -n "$PDP_HOME" ] && export PDP_HOME="$PDP_HOME"
-[ -n "$PDP_CONF" ] && export PDP_CONF="$PDP_CONF"
-[ -n "$PDP_CONFDIR" ] && export PDP_CONFDIR="$PDP_CONFDIR"
-[ -n "$PDP_LOGDIR" ] && export PDP_LOGDIR="$PDP_LOGDIR"
-[ -n "$PDP_LIBDIR" ] && export PDP_LIBDIR="$PDP_LIBDIR"
-[ -n "$PDP_ENDORSEDDIR" ] && export PDP_ENDORSEDDIR="$PDP_ENDORSEDDIR"
+
+# Use functions to add lock and pid files 
+# Function to start the PDPd daemon
+function start() {
+echo -n "Starting ${PDP_PROG}... "
+    if [ "$RETURN_CODE" != "0" ]; then 
+        log_failure_msg
+        return
+    fi
+    _current_state
+   if [ "$HAS_LOCK" -eq 1 ]; then
+        if [ -f "$PDP_LOCK" ]; then
+            if [ -f "$PDP_PID" ]; then
+                read kpid < $PDP_PID
+                if [ -d "/proc/${kpid}" ]; then
+                    log_success_msg
+                    return 0
+                fi
+            fi
+        fi
+    else
+        if [ -f "$PDP_PID" ]; then
+            read kpid < $PDP_PID
+            if [ -d "/proc/${kpid}" ]; then
+                log_success_msg
+                return 0
+            fi
+        fi
+    fi
+    touch $PDP_PID 2>&1 || RETURN_CODE="4"
+    if [ "$RETURN_CODE" -eq "0" ]; then
+        $PDPCTL start || RETURN_CODE="4"
+    fi
+    if [ "$RETURN_CODE" -eq "0" ]; then 
+        log_success_msg
+        if [ -n "$PDP_LOCK" -a "$HAS_LOCK" -eq 1 ]; then
+            touch $PDP_LOCK
+        fi
+    else
+        log_failure_msg "Error code ${RETURN_CODE}"
+    fi
+}
+
+# Function to stop the PDP
+function stop() {
+echo -n "Stopping ${PDP_PROG}... "
+    if [ -f "$PDP_PID" ]; then
+        if [ "$RETURN_CODE" -eq "0" ]; then
+            if [ "$HAS_LOCK" -eq 1 ]; then
+                touch $PDP_LOCK 2>&1 || RETURN_CODE="4"
+            fi
+            [ "$RETURN_CODE" -eq "0" ] && $PDPCTL stop || RETURN_CODE="4"
+        fi
+        if [ "$RETURN_CODE" -eq "0" ]; then
+            count="0"
+            if [ -f "$PDP_PID" ]; then
+                read kpid < $PDP_PID
+                until [ "$(ps --pid $kpid | grep -c $kpid)" -eq "0" ] || [ "$count" -gt "$SHUTDOWN_WAIT" ]; do
+                    sleep 1
+                    let count="${count}+1"
+                done
+                if [ "$count" -gt "$SHUTDOWN_WAIT" ]; then
+                    log_warning_msg "killing processes which did not stop after ${SHUTDOWN_WAIT} seconds"
+                    kill -9 $kpid
+                fi
+                log_success_msg
+            fi
+            rm -f $PDP_PID
+            if [ "$HAS_LOCK" -eq 1 ]; then
+                rm -f $PDP_LOCK
+            fi
+        else
+            log_failure_msg
+            RETURN_CODE="4"
+        fi
+    else
+        log_success_msg
+        RETURN_CODE="0"
+    fi
+}
+
+# Function to read the status of the PDP
+function status() {
+    _current_state
+    if [ $? -eq 5 ]; then
+        echo "${PDP_PROG} is not running..."
+    else
+        $PDPCTL status
+    fi
+}
+
+# tests if the current process exists and if it has an associated pid and lock file. Return codes are as followed:
+# 0 = process is running correctly (and has both, a pid and a lock file)
+# 1 = the function exited unexpected (fatal error)
+# 2 = process is running and has a lock file, but no pid file, The pid-file is created
+# 3 = process is running and has a pid file, but no lock file. The lock-file is created
+# 4 = process is running and has no pid and no lock file. Both files are created
+# 5 = process is not running. Possible stale files are removed
+function _current_state() {
+    local pid=`pgrep -f org.glite.authz.pdp.server.PDPDaemon`
+    
+    if [ -z $pid ]; then
+        rm -f $PDP_PID
+        if [ "$HAS_LOCK" -eq 1 ]; then
+            rm -f $PDP_LOCK
+        fi
+        return 5
+    fi
+    if [ "$HAS_LOCK" -eq 1 ]; then
+        if [ -f "$PDP_LOCK" -a ! -f "$PDP_PID" ]; then
+            touch $PDP_PID 2>&1
+            echo $pid > $PDP_PID
+            return 2
+        elif [ -f "$PDP_PID" -a ! -f "$PDP_LOCK" ]; then
+            touch $PDP_LOCK
+            return 3
+        elif [ -f "$PDP_PID" -a -f "$PDP_LOCK" ]; then
+            return 0
+        else
+            touch $PDP_PID 2>&1
+            echo $pid > $PDP_PID
+            touch $PDP_LOCK
+            return 4
+        fi
+    else
+        if [! -f "$PDP_PID" ]; then
+            touch $PDP_PID 2>&1
+            echo $pid > $PDP_PID
+            return 2
+        else
+            return 0
+        fi
+    fi  
+}
+
 
 case "$1" in
     start)
-        $PDPCTL start
+        start
         ;; 
     stop)
-        $PDPCTL stop
+        stop
         ;;
     restart)
-        $PDPCTL stop
-        sleep 5
-        $PDPCTL start
+        stop
+        start
         ;;
     status)
-        $PDPCTL status
+        status
+        ;;
+    version)
+        $PDPCTL version
         ;;
     reloadpolicy)
         $PDPCTL reloadPolicy
         ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status|reloadpolicy}"
+        echo "Usage: $0 {start|stop|restart|status|version|reloadpolicy}"
         exit 1
         ;;
 esac
 
-exit $?
-
+exit $RETURN_CODE
