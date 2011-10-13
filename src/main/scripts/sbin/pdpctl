@@ -27,7 +27,7 @@ PDP_LIBDIR=${PDP_LIBDIR-"$PDP_HOME/lib"}
 PDP_ENDORSEDDIR=${PDP_ENDORSEDDIR-"$PDP_LIBDIR/endorsed"}
 
 # PID file location
-PDP_PID="/var/run/argus-pdp.pid"
+PDP_PID=${PDP_PID-"/var/run/argus-pdp.pid"}
 
 # configuration file and check
 PDP_CONF=${PDP_CONF-"$PDP_CONFDIR/pdp.ini"}

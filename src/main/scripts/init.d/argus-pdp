@@ -45,7 +45,6 @@ else
     exit 1
 fi
 
-# A check-variable for the state of the lock and pid-file
 RETURN_CODE="0"
 
 NAME="$(basename $0)"
@@ -53,6 +52,7 @@ PDP_PROG="${NAME}"
 SHUTDOWN_WAIT=10
 HAS_LOCK=0
 PDP_LOCK=
+PDP_PID=${PDP_PID-"/var/run/${NAME}.pid"}
 
 # See if there is an appropriate location for the lock-file, if not, do not use a lock-file
 if [ -d /var/lock/subsys ]; then
@@ -63,13 +63,7 @@ elif [ -d /var/lock ]; then
     HAS_LOCK=1
 fi
 
-PDP_PID="/var/run/${NAME}.pid"
-
-
-# Preparation for multios-support
-# DISTRIB_ID=`lsb_release -i -s 2>/dev/null`
-
-# PEP server control script
+# PDP server control script
 PDPCTL=/usr/sbin/pdpctl
 
 if [ `id -u` -ne 0 ]; then
