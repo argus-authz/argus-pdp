@@ -26,6 +26,9 @@ PDP_LOGDIR=${PDP_LOGDIR-"$PDP_HOME/logs"}
 PDP_LIBDIR=${PDP_LIBDIR-"$PDP_HOME/lib"}
 PDP_ENDORSEDDIR=${PDP_ENDORSEDDIR-"$PDP_LIBDIR/endorsed"}
 
+# PID file location
+PDP_PID="/var/run/argus-pdp.pid"
+
 # configuration file and check
 PDP_CONF=${PDP_CONF-"$PDP_CONFDIR/pdp.ini"}
 if [ ! -r "$PDP_CONF" ]; then
@@ -92,6 +95,14 @@ function executeAdminCommand {
 function start {
     # Run the PDP
     $JAVACMD $PDP_JOPTS 'org.glite.authz.pdp.server.PDPDaemon' $PDP_CONF &
+    if [ -n "$PDP_PID" ]; then
+      echo $! > $PDP_PID
+    fi
+}
+
+function version {
+    # Print currently used Version of the PEPd
+    $JAVACMD $PDP_JOPTS 'org.glite.authz.pdp.server.Version'
 }
 
 
@@ -101,6 +112,7 @@ function print_help {
    echo "  $0 start   - start the PDP service"
    echo "  $0 stop    - stop the PDP service" 
    echo "  $0 status  - print PDP status"
+   echo "  $0 version - print PDP version"
    echo "  $0 reloadPolicy - reload the PDP policies from the PAP"
 
 }
@@ -115,6 +127,9 @@ case "$1" in
     status) 
         executeAdminCommand 'status'
         ;;
+    version)
+        version
+        ;;
     reloadPolicy) 
         executeAdminCommand 'reloadPolicy'
         ;;
@@ -124,4 +139,3 @@ case "$1" in
         ;;
 esac
 exit $? 
-
