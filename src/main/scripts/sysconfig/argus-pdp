@@ -12,5 +12,6 @@ PDP_JOPTS="-Xmx256M"
 #PDP_LOGDIR="/var/log/argus/pdp"
 #PDP_LIBDIR="/var/lib/argus/pdp/lib"
 #PDP_ENDORSEDDIR="/var/lib/argus/pdp/lib/endorsed"
+#PDP_PID="/var/run/argus-pdp.pid"
 
 
