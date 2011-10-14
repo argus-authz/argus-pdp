@@ -18,26 +18,41 @@
 #set -x
 
 # PDP server home
-PDP_HOME=${PDP_HOME-"/usr/share/argus/pdp"}
+if [ -d "/usr/share/argus/pdp" ]; then
+    PDP_HOME=${PDP_HOME:-"/usr/share/argus/pdp"}
+else
+    PRG="$0"
+    while [ -h "$PRG" ]; do
+        ls=`ls -ld "$PRG"`
+        link=`expr "$ls" : '.*-> \(.*\)$'`
+        if expr "$link" : '/.*' > /dev/null; then
+            PRG="$link"
+        else
+            PRG=`dirname "$PRG"`/"$link"
+        fi
+    done
+    PRGDIR=`dirname "$PRG"`
+    [ -z "$PDP_HOME" ] && PDP_HOME=`cd "$PRGDIR/.." ; pwd`    
+fi
 
 # config, log and lib directories
-PDP_CONFDIR=${PDP_CONFDIR-"$PDP_HOME/conf"}
-PDP_LOGDIR=${PDP_LOGDIR-"$PDP_HOME/logs"}
-PDP_LIBDIR=${PDP_LIBDIR-"$PDP_HOME/lib"}
-PDP_ENDORSEDDIR=${PDP_ENDORSEDDIR-"$PDP_LIBDIR/endorsed"}
+PDP_CONFDIR=${PDP_CONFDIR:-"$PDP_HOME/conf"}
+PDP_LOGDIR=${PDP_LOGDIR:-"$PDP_HOME/logs"}
+PDP_LIBDIR=${PDP_LIBDIR:-"$PDP_HOME/lib"}
+PDP_ENDORSEDDIR=${PDP_ENDORSEDDIR:-"$PDP_LIBDIR/endorsed"}
 
 # PID file location
-PDP_PID=${PDP_PID-"/var/run/argus-pdp.pid"}
+PDP_PID=${PDP_PID:-"/var/run/argus-pdp.pid"}
 
 # configuration file and check
-PDP_CONF=${PDP_CONF-"$PDP_CONFDIR/pdp.ini"}
+PDP_CONF=${PDP_CONF:-"$PDP_CONFDIR/pdp.ini"}
 if [ ! -r "$PDP_CONF" ]; then
     echo "$0: ERROR: config file $PDP_CONF not readable"
     exit 1
 fi
 
 # java command and check
-JAVACMD=${JAVACMD-`which java`}
+JAVACMD=${JAVACMD:-`which java`}
 if [ ! -x "$JAVACMD" ] ; then
     echo "$0: ERROR: $JAVACMD not available in PATH"
     exit 1
