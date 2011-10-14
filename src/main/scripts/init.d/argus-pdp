@@ -42,14 +42,14 @@
 # set -x
 
 # Source functions Library
-if [ -r /lib/lsb/init-functions ]; then
-    . /lib/lsb/init-functions
+if [ -r "/lib/lsb/init-functions" ]; then
+    source /lib/lsb/init-functions
 else
     echo "/lib/lsb/init-functions must be present to run this script"
     exit 1
 fi
 
-RETURN_CODE="0"
+RETURN_CODE=0
 
 NAME="$(basename $0)"
 PDP_PROG="${NAME}"
@@ -59,16 +59,16 @@ PDP_LOCK=
 PDP_PID=${PDP_PID-"/var/run/${NAME}.pid"}
 
 # See if there is an appropriate location for the lock-file, if not, do not use a lock-file
-if [ -d /var/lock/subsys ]; then
+if [ -d "/var/lock/subsys" ]; then
     PDP_LOCK="/var/lock/subsys/${NAME}"
     HAS_LOCK=1
-elif [ -d /var/lock ]; then
+elif [ -d "/var/lock" ]; then
     PDP_LOCK="/var/lock/${NAME}"
     HAS_LOCK=1
 fi
 
 # PDP server control script
-PDPCTL=/usr/sbin/pdpctl
+PDPCTL="/usr/sbin/pdpctl"
 
 if [ `id -u` -ne 0 ]; then
     echo "You need root privileges to run this script"
@@ -76,23 +76,22 @@ if [ `id -u` -ne 0 ]; then
 fi 
 
 # source optional system configuration
-if [ -r /etc/sysconfig/argus-pdp ]; then
+if [ -r "/etc/sysconfig/argus-pdp" ]; then
     # Auto-export variables to subsequent scripts
     set -a
     source /etc/sysconfig/argus-pdp
 fi
 
 
-# Use functions to add lock and pid files 
 # Function to start the PDPd daemon
 function start() {
 echo -n "Starting ${PDP_PROG}... "
-    if [ "$RETURN_CODE" != "0" ]; then 
+    if [ $RETURN_CODE -ne 0 ]; then 
         log_failure_msg
-        return
+        return 4
     fi
     _current_state
-   if [ "$HAS_LOCK" -eq 1 ]; then
+   if [ $HAS_LOCK -eq 1 ]; then
         if [ -f "$PDP_LOCK" ]; then
             if [ -f "$PDP_PID" ]; then
                 read kpid < $PDP_PID
@@ -111,13 +110,13 @@ echo -n "Starting ${PDP_PROG}... "
             fi
         fi
     fi
-    touch $PDP_PID 2>&1 || RETURN_CODE="4"
-    if [ "$RETURN_CODE" -eq "0" ]; then
-        $PDPCTL start || RETURN_CODE="4"
+    touch $PDP_PID 2>&1 || RETURN_CODE=4
+    if [ $RETURN_CODE -eq 0 ]; then
+        $PDPCTL start || RETURN_CODE=4
     fi
-    if [ "$RETURN_CODE" -eq "0" ]; then 
+    if [ $RETURN_CODE -eq 0 ]; then 
         log_success_msg
-        if [ -n "$PDP_LOCK" -a "$HAS_LOCK" -eq 1 ]; then
+        if [ -n "$PDP_LOCK" -a $HAS_LOCK -eq 1 ]; then
             touch $PDP_LOCK
         fi
     else
@@ -129,37 +128,37 @@ echo -n "Starting ${PDP_PROG}... "
 function stop() {
 echo -n "Stopping ${PDP_PROG}... "
     if [ -f "$PDP_PID" ]; then
-        if [ "$RETURN_CODE" -eq "0" ]; then
-            if [ "$HAS_LOCK" -eq 1 ]; then
-                touch $PDP_LOCK 2>&1 || RETURN_CODE="4"
+        if [ $RETURN_CODE -eq 0 ]; then
+            if [ $HAS_LOCK -eq 1 ]; then
+                touch $PDP_LOCK 2>&1 || RETURN_CODE=4
             fi
-            [ "$RETURN_CODE" -eq "0" ] && $PDPCTL stop || RETURN_CODE="4"
+            [ $RETURN_CODE -eq 0 ] && $PDPCTL stop || RETURN_CODE=4
         fi
-        if [ "$RETURN_CODE" -eq "0" ]; then
-            count="0"
+        if [ $RETURN_CODE -eq 0 ]; then
+            count=0
             if [ -f "$PDP_PID" ]; then
                 read kpid < $PDP_PID
-                until [ "$(ps --pid $kpid | grep -c $kpid)" -eq "0" ] || [ "$count" -gt "$SHUTDOWN_WAIT" ]; do
+                until [ $(ps --pid $kpid | grep -c $kpid) -eq 0 ] || [ $count -gt $SHUTDOWN_WAIT ]; do
                     sleep 1
-                    let count="${count}+1"
+                    let count=${count}+1
                 done
-                if [ "$count" -gt "$SHUTDOWN_WAIT" ]; then
+                if [ $count -gt $SHUTDOWN_WAIT ]; then
                     log_warning_msg "killing processes which did not stop after ${SHUTDOWN_WAIT} seconds"
                     kill -9 $kpid
                 fi
                 log_success_msg
             fi
             rm -f $PDP_PID
-            if [ "$HAS_LOCK" -eq 1 ]; then
+            if [ $HAS_LOCK -eq 1 ]; then
                 rm -f $PDP_LOCK
             fi
         else
             log_failure_msg
-            RETURN_CODE="4"
+            RETURN_CODE=4
         fi
     else
         log_success_msg
-        RETURN_CODE="0"
+        RETURN_CODE=0
     fi
 }
 
@@ -168,7 +167,7 @@ function status() {
     _current_state
     if [ $? -eq 5 ]; then
         echo "${PDP_PROG} is not running..."
-        RETURN_CODE="1"
+        RETURN_CODE=4
     else
         $PDPCTL status
     fi
@@ -186,12 +185,12 @@ function _current_state() {
     
     if [ -z $pid ]; then
         rm -f $PDP_PID
-        if [ "$HAS_LOCK" -eq 1 ]; then
+        if [ $HAS_LOCK -eq 1 ]; then
             rm -f $PDP_LOCK
         fi
         return 5
     fi
-    if [ "$HAS_LOCK" -eq 1 ]; then
+    if [ $HAS_LOCK -eq 1 ]; then
         if [ -f "$PDP_LOCK" -a ! -f "$PDP_PID" ]; then
             touch $PDP_PID 2>&1
             echo $pid > $PDP_PID
