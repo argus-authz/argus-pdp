@@ -18,22 +18,19 @@
 #set -x
 
 # PDP server home
-if [ -d "/usr/share/argus/pdp" ]; then
-    PDP_HOME=${PDP_HOME:-"/usr/share/argus/pdp"}
-else
-    PRG="$0"
-    while [ -h "$PRG" ]; do
-        ls=`ls -ld "$PRG"`
-        link=`expr "$ls" : '.*-> \(.*\)$'`
-        if expr "$link" : '/.*' > /dev/null; then
-            PRG="$link"
-        else
-            PRG=`dirname "$PRG"`/"$link"
-        fi
-    done
-    PRGDIR=`dirname "$PRG"`
-    [ -z "$PDP_HOME" ] && PDP_HOME=`cd "$PRGDIR/.." ; pwd`    
-fi
+
+PRG="$0"
+while [ -h "$PRG" ]; do
+    ls=`ls -ld "$PRG"`
+    link=`expr "$ls" : '.*-> \(.*\)$'`
+    if expr "$link" : '/.*' > /dev/null; then
+        PRG="$link"
+    else
+        PRG=`dirname "$PRG"`/"$link"
+    fi
+done
+PRGDIR=`dirname "$PRG"`
+[ -z "$PDP_HOME" ] && PDP_HOME=`cd "$PRGDIR/.." ; pwd`    
 
 # config, log and lib directories
 PDP_CONFDIR=${PDP_CONFDIR:-"$PDP_HOME/conf"}
