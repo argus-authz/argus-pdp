@@ -58,18 +58,23 @@ Installed in a fakeroot directory structure.
             <directory>src/home-tmpl/empty-dir</directory>
             <outputDirectory>/usr/share/argus/pdp</outputDirectory>
         </fileSet>
+        <!-- /usr/sbin directory -->
+        <fileSet>
+            <directory>src/home-tmpl/empty-dir</directory>
+            <outputDirectory>/usr/sbin</outputDirectory>
+        </fileSet>
+        <!-- /usr/share/argus/pdp/sbin/pdpctl control script -->
+        <fileSet>
+            <directory>src/main/scripts/sbin</directory>
+            <outputDirectory>/usr/share/argus/pdp/sbin</outputDirectory>
+            <fileMode>0750</fileMode>
+        </fileSet>
         <!-- /etc/argus/pdp config directory -->
         <fileSet>
             <directory>src/main/config</directory>
             <outputDirectory>/etc/argus/pdp</outputDirectory>
             <fileMode>0640</fileMode>
             <directoryMode>0750</directoryMode>
-        </fileSet>
-        <!-- /usr/sbin/pdpctl control script -->
-        <fileSet>
-            <directory>src/main/scripts/sbin</directory>
-            <outputDirectory>/usr/sbin</outputDirectory>
-            <fileMode>0750</fileMode>
         </fileSet>
         <!-- /etc/sysconfig/argus-pdp optional config -->
         <fileSet>
@@ -80,7 +85,7 @@ Installed in a fakeroot directory structure.
         <!-- /etc/rc.d/init.d startup script -->
         <fileSet>
             <directory>src/main/scripts/init.d</directory>
-            <outputDirectory>/etc/rc.d/init.d</outputDirectory>
+            <outputDirectory>/etc/init.d</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
         <!-- /var/log/argus/pdp logging directory -->
