@@ -21,8 +21,7 @@ set -e
 NAME=pdp
 HOME="usr/share/argus/${NAME}"
 
-prefix=
-bin_prefix="$prefix/.."
+root_prefix="../../../.."
 
 function create_symlink(){
 	if [ -e $2 ]; then
@@ -31,15 +30,18 @@ function create_symlink(){
 	ln -vs $1 $2
 }
 
+# pdpctl: /usr/sbin/pdpctl -> /usr/share/argus/pdp/sbin/pdpctl
+create_symlink ../../usr/share/argus/pdp/sbin/pdpctl usr/sbin/pdpctl
+
 # conf: /usr/share/argus/pdp/conf -> /etc/argus/pdp
-create_symlink /etc/argus/$NAME $HOME/conf
+create_symlink $root_prefix/etc/argus/$NAME $HOME/conf
 
 # lib: /usr/share/argus/pdp/lib -> /var/lib/argus/pdp/lib
-create_symlink /var/lib/argus/$NAME/lib $HOME/lib
+create_symlink $root_prefix/var/lib/argus/$NAME/lib $HOME/lib
 
 # logs: /usr/share/argus/pdp/logs -> /var/log/argus/pdp
-create_symlink /var/log/argus/$NAME $HOME/logs
+create_symlink $root_prefix/var/log/argus/$NAME $HOME/logs
 
 # doc: /usr/share/argus/pdp/doc -> /usr/share/doc/argus/pdp
-create_symlink /usr/share/doc/argus/$NAME $HOME/doc
+create_symlink $root_prefix/usr/share/doc/argus/$NAME $HOME/doc
 
