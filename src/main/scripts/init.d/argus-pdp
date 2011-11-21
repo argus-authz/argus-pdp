@@ -43,7 +43,7 @@
 
 # PDP server control script and name of the script
 PDPCTL="/usr/sbin/pdpctl"
-NAME="$(basename $0)"
+NAME="argus-pdp"
 
 if [ `id -u` -ne 0 ]; then
     echo "You need root privileges to run this script"
