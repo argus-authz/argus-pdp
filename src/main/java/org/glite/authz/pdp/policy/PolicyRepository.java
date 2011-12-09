@@ -27,7 +27,8 @@ import org.glite.authz.common.logging.LoggingConstants;
 import org.glite.authz.pdp.config.PDPConfiguration;
 import org.glite.authz.pdp.server.PDPMetrics;
 import org.glite.authz.pdp.util.XACMLUtil;
-import org.herasaf.xacml.core.policy.PolicyConverter;
+
+import org.herasaf.xacml.core.policy.PolicyMarshaller;
 import org.herasaf.xacml.core.policy.impl.PolicySetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -144,7 +145,7 @@ public class PolicyRepository {
             log.info("Refreshing authorization policy from remote PAPs");
             org.opensaml.xacml.policy.PolicySetType policySetOM = papClient.retrievePolicySet();
             if (policySetOM != null) {
-                policySet = (PolicySetType) PolicyConverter.unmarshal(policySetOM.getDOM());
+                policySet = (PolicySetType) PolicyMarshaller.unmarshal(policySetOM.getDOM());
                 String policySetId = policySetOM.getPolicySetId();
                 String policyVersion = policySetOM.getVersion();
                 ((PDPMetrics) daemonConfig.getServiceMetrics()).updatePolicyInformation(policySetId, policyVersion);
