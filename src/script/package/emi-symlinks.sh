@@ -20,6 +20,8 @@ set -e
 
 NAME=pdp
 HOME="usr/share/argus/${NAME}"
+NAMECTL="${NAME}ctl"
+
 
 root_prefix="../../../.."
 
@@ -31,7 +33,7 @@ function create_symlink(){
 }
 
 # pdpctl: /usr/sbin/pdpctl -> /usr/share/argus/pdp/sbin/pdpctl
-create_symlink ../../usr/share/argus/pdp/sbin/pdpctl usr/sbin/pdpctl
+create_symlink ../../usr/share/argus/$NAME/sbin/$NAMECTL usr/sbin/$NAMECTL
 
 # conf: /usr/share/argus/pdp/conf -> /etc/argus/pdp
 create_symlink $root_prefix/etc/argus/$NAME $HOME/conf
