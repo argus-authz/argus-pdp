@@ -20,14 +20,13 @@ package org.glite.authz.pdp.util;
 import java.io.StringWriter;
 import java.util.List;
 
-import javax.xml.bind.JAXBException;
-
 import net.jcip.annotations.ThreadSafe;
 
 import org.glite.authz.common.util.Strings;
 
-import org.herasaf.xacml.core.utils.ContextAndPolicy;
-import org.herasaf.xacml.core.utils.ContextAndPolicy.JAXBProfile;
+import org.herasaf.xacml.core.WritingException;
+import org.herasaf.xacml.core.policy.Evaluatable;
+import org.herasaf.xacml.core.policy.PolicyMarshaller;
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.saml2.core.Statement;
@@ -58,9 +57,6 @@ public class XACMLUtil {
 
     /** Class logger. */
     private static final Logger LOG= LoggerFactory.getLogger(XACMLUtil.class);
-
-    /** Pool used to parse XML. */
-    // private static final BasicParserPool parser;
 
     @SuppressWarnings("unchecked")
     private static SAMLObjectBuilder<XACMLAuthzDecisionStatementType> authzStatementBuilder= (SAMLObjectBuilder<XACMLAuthzDecisionStatementType>) Configuration.getBuilderFactory().getBuilder(XACMLAuthzDecisionStatementType.TYPE_NAME_XACML20);
@@ -267,21 +263,21 @@ public class XACMLUtil {
      * @return the marshalled form of the element or null if he element could
      *         not be marshalled
      */
-    public static String marshall(Object jaxbElement) {
+    public static String marshall(Evaluatable jaxbElement) {
         if (jaxbElement == null) {
             return null;
         }
 
         try {
-            javax.xml.bind.Marshaller marshaller= ContextAndPolicy.getMarshaller(JAXBProfile.POLICY);
-            marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT,
-                                   true);
-            marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FRAGMENT,
-                                   true);
+//            javax.xml.bind.Marshaller marshaller= ContextAndPolicy.getMarshaller(JAXBProfile.POLICY);
+//            marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT,
+//                                   true);
+//            marshaller.setProperty(javax.xml.bind.Marshaller.JAXB_FRAGMENT,
+//                                   true);
             StringWriter writer= new StringWriter();
-            marshaller.marshal(jaxbElement, writer);
+            PolicyMarshaller.marshal(jaxbElement, writer);
             return writer.toString();
-        } catch (JAXBException e) {
+        } catch (WritingException e) {
             LOG.error("Unable to log policy to be used for authorization decision",
                       e);
             return null;
