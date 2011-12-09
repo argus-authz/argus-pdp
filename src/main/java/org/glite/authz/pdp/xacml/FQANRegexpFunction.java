@@ -23,7 +23,7 @@ import org.glite.authz.common.fqan.FQAN;
 import org.glite.authz.common.profile.AuthorizationProfileConstants;
 
 import org.herasaf.xacml.core.function.FunctionProcessingException;
-import org.herasaf.xacml.core.function.impl.AbstractFunction;
+import org.herasaf.xacml.core.function.AbstractFunction;
 
 /** Regular expression FQAN matching function. */
 public class FQANRegexpFunction extends AbstractFunction {
@@ -43,12 +43,24 @@ public class FQANRegexpFunction extends AbstractFunction {
      * matches the second argument of type http://glite.org/xacml/datatype/fqan.
      */
     public Object handle(Object... args) throws FunctionProcessingException {
-        if (args.length != 2 || !(args[0] instanceof String) || !(args[1] instanceof FQAN)) {
+        //XXX
+        System.out.println("XXX: function " + getFunctionId() + " handle(...)");
+        System.out.println("XXX: args.length=" + args.length);
+        int i= 0;
+        for (Object object : args) {
+            System.out.println("XXX: args["+ i +"]="+object.getClass().getName());
+            i++;
+            if (object instanceof FQAN) {
+                System.out.println("XXX: FQAN=" + object.toString());
+            }
+        }
+        if (args.length != 2 || !(args[0] instanceof FQAN) || !(args[1] instanceof FQAN)) {
+//        if (args.length != 2 || !(args[0] instanceof String) || !(args[1] instanceof FQAN)) {
             throw new FunctionProcessingException(
                     "This matching function only operates on an FQAN regular expression string and a FQAN object");
         }
 
-        String regexp = (String) args[0];
+        FQAN regexp = (FQAN) args[0];
         FQAN fqan = (FQAN) args[1];
 
         try {

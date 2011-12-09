@@ -21,7 +21,7 @@ import org.glite.authz.common.fqan.FQAN;
 import org.glite.authz.common.profile.AuthorizationProfileConstants;
 
 import org.herasaf.xacml.core.function.FunctionProcessingException;
-import org.herasaf.xacml.core.function.impl.AbstractFunction;
+import org.herasaf.xacml.core.function.AbstractFunction;
 
 /** Exact equality matching function for {@link FQAN}s. */
 public class FQANEqualFunction extends AbstractFunction {

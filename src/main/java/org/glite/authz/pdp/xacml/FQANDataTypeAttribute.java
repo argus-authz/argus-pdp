@@ -22,7 +22,7 @@ import java.text.ParseException;
 import org.glite.authz.common.fqan.FQAN;
 import org.glite.authz.common.profile.AuthorizationProfileConstants;
 
-import org.herasaf.xacml.SyntaxException;
+import org.herasaf.xacml.core.SyntaxException;
 import org.herasaf.xacml.core.dataTypeAttribute.impl.AbstractDataTypeAttribute;
 
 /** XACML data type FQAN converter. */
