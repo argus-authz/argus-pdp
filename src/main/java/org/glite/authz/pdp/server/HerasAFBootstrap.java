@@ -19,9 +19,6 @@ package org.glite.authz.pdp.server;
 
 import java.util.HashMap;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-
 import net.jcip.annotations.ThreadSafe;
 
 import org.glite.authz.common.profile.AuthorizationProfileConstants;
@@ -273,8 +270,7 @@ import org.herasaf.xacml.core.function.impl.stringConversionFunctions.StringNorm
 import org.herasaf.xacml.core.function.impl.stringConversionFunctions.StringNormalizeToLowerCaseFunction;
 import org.herasaf.xacml.core.function.impl.stringFunctions.StringConcatenateFunction;
 import org.herasaf.xacml.core.function.impl.stringFunctions.UriStringConcatenateFunction;
-import org.herasaf.xacml.core.utils.ContextAndPolicy;
-import org.herasaf.xacml.core.utils.ContextAndPolicyConfiguration;
+import org.herasaf.xacml.core.simplePDP.initializers.JAXBInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -297,20 +293,23 @@ public final class HerasAFBootstrap {
 
     /** Initializes the JAXB configuration used to unmarshall policies. */
     private static void initializeJAXB() {
-        try {
-            JAXBContext jaxbCtx = JAXBContext
-                    .newInstance("org.herasaf.xacml.core.policy.impl:org.herasaf.xacml.core.context.impl");
 
-            ContextAndPolicyConfiguration capConfig = new ContextAndPolicyConfiguration();
-            capConfig.setContext(jaxbCtx);
-
-            ContextAndPolicy.setPolicyProfile(capConfig);
-            ContextAndPolicy.setRequestCtxProfile(capConfig);
-            ContextAndPolicy.setRequestCtxProfile(capConfig);
-        } catch (JAXBException e) {
-            LOG.error("Unable to initialize JAXB", e);
-            throw new RuntimeException(e);
-        }
+        JAXBInitializer jaxbInitializer= new JAXBInitializer();
+        jaxbInitializer.run();
+//        try {
+//            JAXBContext jaxbCtx = JAXBContext
+//                    .newInstance("org.herasaf.xacml.core.policy.impl:org.herasaf.xacml.core.context.impl");
+//
+//            ContextAndPolicyConfiguration capConfig = new ContextAndPolicyConfiguration();
+//            capConfig.setContext(jaxbCtx);
+//
+//            ContextAndPolicy.setPolicyProfile(capConfig);
+//            ContextAndPolicy.setRequestCtxProfile(capConfig);
+//            ContextAndPolicy.setRequestCtxProfile(capConfig);
+//        } catch (JAXBException e) {
+//            LOG.error("Unable to initialize JAXB", e);
+//            throw new RuntimeException(e);
+//        }
     }
 
     /** Initialize all the standard attribute data types. */
@@ -588,12 +587,12 @@ public final class HerasAFBootstrap {
     /** Initialize all the standard policy combining types. */
     private static void initializePolicyCombiningAlgorithms() {
         HashMap<String, PolicyCombiningAlgorithm> algos = new HashMap<String, PolicyCombiningAlgorithm>();
-        algos.put(PolicyDenyOverridesAlgorithm.COMBALGOID, new PolicyDenyOverridesAlgorithm());
-        algos.put(PolicyFirstApplicableAlgorithm.COMBALGOID, new PolicyFirstApplicableAlgorithm());
-        algos.put(PolicyOnlyOneApplicableAlgorithm.COMBALGOID, new PolicyOnlyOneApplicableAlgorithm());
-        algos.put(PolicyOrderedDenyOverridesAlgorithm.COMBALGOID, new PolicyOrderedDenyOverridesAlgorithm());
-        algos.put(PolicyOrderedPermitOverridesAlgorithm.COMBALGOID, new PolicyOrderedPermitOverridesAlgorithm());
-        algos.put(PolicyPermitOverridesAlgorithm.COMBALGOID, new PolicyPermitOverridesAlgorithm());
+        algos.put(PolicyDenyOverridesAlgorithm.ID, new PolicyDenyOverridesAlgorithm());
+        algos.put(PolicyFirstApplicableAlgorithm.ID, new PolicyFirstApplicableAlgorithm());
+        algos.put(PolicyOnlyOneApplicableAlgorithm.ID, new PolicyOnlyOneApplicableAlgorithm());
+        algos.put(PolicyOrderedDenyOverridesAlgorithm.ID, new PolicyOrderedDenyOverridesAlgorithm());
+        algos.put(PolicyOrderedPermitOverridesAlgorithm.ID, new PolicyOrderedPermitOverridesAlgorithm());
+        algos.put(PolicyPermitOverridesAlgorithm.ID, new PolicyPermitOverridesAlgorithm());
 
         URNToPolicyCombiningAlgorithmConverter.setCombiningAlgorithms(algos);
     }

@@ -34,6 +34,7 @@ import org.glite.authz.common.http.JettyAdminService;
 import org.glite.authz.common.http.JettyRunThread;
 import org.glite.authz.common.http.JettyShutdownTask;
 import org.glite.authz.common.http.JettySslSelectChannelConnector;
+import org.glite.authz.common.http.ServiceMetricsServlet;
 import org.glite.authz.common.http.StatusCommand;
 import org.glite.authz.common.http.TimerShutdownTask;
 import org.glite.authz.common.logging.AccessLoggingFilter;
@@ -200,6 +201,10 @@ public final class PDPDaemon {
         daemonRequestServlet.setName("PDP Servlet");
         servletContext.addServlet(daemonRequestServlet, "/authz");
 
+        ServletHolder statusRequestServlet= new ServletHolder(new ServiceMetricsServlet(daemonConfig.getServiceMetrics()));
+        statusRequestServlet.setName("Status Servlet");
+        servletContext.addServlet(statusRequestServlet, "/status");
+        
         return httpServer;
     }
 
@@ -243,6 +248,7 @@ public final class PDPDaemon {
                                                               adminPort,
                                                               daemonConfig.getAdminPassword());
 
+        // TODO: move the status to another service
         adminService.registerAdminCommand(new StatusCommand(daemonConfig.getServiceMetrics()));
         adminService.registerAdminCommand(new ReloadPolicyCommand(policyRepository));
 

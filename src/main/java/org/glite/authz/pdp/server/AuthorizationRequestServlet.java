@@ -26,9 +26,6 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -43,12 +40,17 @@ import org.glite.authz.pdp.util.AuditLogEntry;
 import org.glite.authz.pdp.util.SAMLUtil;
 import org.glite.authz.pdp.util.XACMLUtil;
 
+import org.herasaf.xacml.core.SyntaxException;
 import org.herasaf.xacml.core.combiningAlgorithm.CombiningAlgorithm;
-import org.herasaf.xacml.core.context.RequestInformation;
+import org.herasaf.xacml.core.context.EvaluationContext;
+import org.herasaf.xacml.core.context.RequestCtx;
+import org.herasaf.xacml.core.context.RequestCtxFactory;
+import org.herasaf.xacml.core.context.StatusCodeComparator;
 import org.herasaf.xacml.core.context.impl.DecisionType;
 import org.herasaf.xacml.core.context.impl.RequestType;
 import org.herasaf.xacml.core.policy.impl.PolicySetType;
-import org.herasaf.xacml.core.utils.ContextAndPolicy;
+import org.herasaf.xacml.core.targetMatcher.TargetMatcher;
+import org.herasaf.xacml.core.targetMatcher.impl.TargetMatcherImpl;
 import org.joda.time.DateTime;
 import org.opensaml.Configuration;
 import org.opensaml.common.binding.BasicSAMLMessageContext;
@@ -89,6 +91,7 @@ import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 
 /** PDP Servlet. */
 @ThreadSafe
@@ -98,7 +101,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
      * Name of the servlet context attribute where this servlet expects to find
      * a {@link Timer}.
      */
-    public static final String TIMER_ATTRIB= "org.glite.authz.pdp.server.timmer";
+    public static final String TIMER_ATTRIB= "org.glite.authz.pdp.server.timer";
 
     /** Serial version UID. */
     private static final long serialVersionUID= -4398772758458846951L;
@@ -138,6 +141,10 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
 
     /** Service used to process policy obligations. */
     private ObligationService obligationService;
+
+    private TargetMatcher targetMatcher= new TargetMatcherImpl();
+
+    private StatusCodeComparator statusCodeComparator= new StatusCodeComparator();
 
     /** {@inheritDoc} */
     public void init(ServletConfig config) throws ServletException {
@@ -190,10 +197,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
             // create a SOAPFault
             Envelope soapMessage= buildSOAPFault(messageContext, e);
             // encode it
-            encodeSOAPMessage(messageContext,
-                              soapMessage,
-                              httpRequest,
-                              httpResponse);
+            encodeSOAPMessage(messageContext, soapMessage);
             return;
         } catch (AuthorizationServiceException e) {
             pdpConfig.getServiceMetrics().incrementTotalServiceRequestErrors();
@@ -206,7 +210,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         }
 
         Response samlResponse= buildSAMLResponse(messageContext);
-        encodeMessage(messageContext, samlResponse, httpRequest, httpResponse);
+        encodeMessage(messageContext, samlResponse);
     }
 
     /** {@inheritDoc} */
@@ -317,30 +321,38 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
             throws AuthorizationServiceException {
         PolicySetType policy= messageContext.getAuthorizationPolicy();
         try {
-            log.debug("Evaluating request {} from {} against version {} of authorization policy {}",
-                      new Object[] { messageContext.getInboundSAMLMessageId(),
-                                    messageContext.getInboundMessageIssuer(),
-                                    policy.getVersion(),
-                                    policy.getPolicySetId(), });
-            RequestInformation reqInfo= new RequestInformation(null, null);
+            if (log.isDebugEnabled()) {
+                log.debug("Evaluating request {} from {} against version {} of authorization policy {}",
+                          new Object[] {
+                                        messageContext.getInboundSAMLMessageId(),
+                                        messageContext.getInboundMessageIssuer(),
+                                        policy.getVersion(),
+                                        policy.getPolicySetId(), });
+            }
+            // RequestInformation reqInfo= new RequestInformation(null, null);
+            EvaluationContext evaluationContext= new EvaluationContext(targetMatcher,
+                                                                       statusCodeComparator);
             CombiningAlgorithm combiningAlgo= policy.getCombiningAlg();
             DecisionType decision= combiningAlgo.evaluate(getXacmlRequest(messageContext),
                                                           policy,
-                                                          reqInfo);
+                                                          evaluationContext);
 
-            log.debug("Evalauation of policy {} version {} resulted in decision {} for request {}",
-                      new Object[] { policy.getPolicySetId(),
-                                    policy.getVersion(), decision.toString(),
-                                    messageContext.getInboundSAMLMessageId(), });
-
+            if (log.isDebugEnabled()) {
+                log.debug("Evaluation of policy {} version {} resulted in decision {} for request {}",
+                          new Object[] {
+                                        policy.getPolicySetId(),
+                                        policy.getVersion(),
+                                        decision.toString(),
+                                        messageContext.getInboundSAMLMessageId(), });
+            }
             log.debug("Building authorization request result");
             String resourceId= extractResourceId(messageContext.getInboundSAMLMessage());
             StatusType status= XACMLUtil.buildStatus(StatusCodeType.SC_OK);
             ArrayList<ObligationType> obligations= null;
-            if (reqInfo.getObligations() != null
-                    && reqInfo.getObligations().getObligations() != null) {
+            if (evaluationContext.getObligations() != null
+                    && evaluationContext.getObligations().getObligations() != null) {
                 obligations= new ArrayList<ObligationType>();
-                for (org.herasaf.xacml.core.policy.impl.ObligationType herasObligation : reqInfo.getObligations().getObligations()) {
+                for (org.herasaf.xacml.core.policy.impl.ObligationType herasObligation : evaluationContext.getObligations().getObligations()) {
                     if (herasObligation != null) {
                         log.debug("Adding obligation '{}' to authorization response",
                                   herasObligation.getObligationId());
@@ -394,16 +406,15 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
      *             thrown if there is a problem converting the incoming message
      *             XML in to a XACML request
      */
-    @SuppressWarnings("unchecked")
     protected RequestType getXacmlRequest(
             AuthzRequestMessageContext messageContext)
             throws AuthorizationServiceException {
         XACMLAuthzDecisionQueryType authzRequest= messageContext.getInboundSAMLMessage();
+        Element dom= authzRequest.getRequest().getDOM();
         try {
-            Unmarshaller unmarshaller= ContextAndPolicy.getUnmarshaller(ContextAndPolicy.JAXBProfile.REQUEST_CTX);
-            JAXBElement<RequestType> reqTypeElem= (JAXBElement<RequestType>) unmarshaller.unmarshal(authzRequest.getRequest().getDOM());
-            return reqTypeElem.getValue();
-        } catch (JAXBException e) {
+            RequestCtx requestCtx= RequestCtxFactory.unmarshal(dom);
+            return requestCtx.getRequest();
+        } catch (SyntaxException e) {
             log.error("Unable to convert SAML/XACML authorization request into HERASAF request context",
                       e);
             throw new AuthorizationServiceException("Invalid request message.",
@@ -426,7 +437,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
 
         log.trace("Building XACML request");
         org.opensaml.xacml.ctx.RequestType request= XACMLUtil.buildRequest(messageContext.getInboundSAMLMessage());
-        
+
         log.trace("Building XACML response");
         ResponseType response= XACMLUtil.buildResponse(messageContext.getAuthorizationResult());
 
@@ -438,7 +449,6 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
         Assertion samlAssertion= SAMLUtil.buildAssertion(pdpConfig.getEntityId(),
                                                          messageContext.getOutboundSAMLMessageIssueInstant(),
                                                          authzStatement);
-
         log.debug("Building SAML response");
         return SAMLUtil.buildSAMLResponse(messageContext.getInboundSAMLMessageId(),
                                           messageContext.getOutboundSAMLMessageIssueInstant(),
@@ -539,14 +549,9 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
      *            message context for the current message
      * @param samlResponse
      *            response to encode
-     * @param httpRequest
-     *            incoming HTTP request
-     * @param httpResponse
-     *            outgoing HTTP response
      */
     protected void encodeMessage(AuthzRequestMessageContext messageContext,
-            Response samlResponse, HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
+            Response samlResponse) {
         messageContext.setOutboundSAMLMessageIssueInstant(new DateTime());
         messageContext.setOutboundMessageIssuer(pdpConfig.getEntityId());
         messageContext.setOutboundSAMLMessage(samlResponse);
@@ -567,8 +572,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
     }
 
     protected void encodeSOAPMessage(MessageContext messageContext,
-            Envelope soapMessage, HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
+            Envelope soapMessage) {
 
         messageContext.setOutboundMessage(soapMessage);
         messageContext.setOutboundMessageIssuer(pdpConfig.getEntityId());
