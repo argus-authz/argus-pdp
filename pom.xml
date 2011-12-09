@@ -6,14 +6,14 @@
     <parent>
         <groupId>org.glite.authz</groupId>
         <artifactId>argus-parent</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <relativePath>../emi.argus.parent</relativePath>
     </parent>
     
     <name>Argus PDP</name>
     <groupId>org.glite.authz</groupId>
     <artifactId>pdp</artifactId>
-    <version>1.4.X</version>
+    <version>1.5.0</version>
 
     <description>XACML based authorization service developed within the gLite project.
     </description>
@@ -27,7 +27,7 @@
             <artifactId>pdp-pep-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.herasaf.xacml</groupId>
+            <groupId>org.herasaf.xacml.core</groupId>
             <artifactId>herasaf-xacml-core</artifactId>
         </dependency>
         <dependency>
@@ -175,7 +175,7 @@
                                 <manifestEntries>
                                     <Implementation-Title>${project.name}</Implementation-Title>
                                     <Implementation-Version>${project.version}</Implementation-Version>
-                                    <Implementation-Vendor>EGEE Collaboration</Implementation-Vendor>
+                                    <Implementation-Vendor>EMI</Implementation-Vendor>
                                 </manifestEntries>
                             </manifestSection>
                         </manifestSections>
@@ -233,13 +233,92 @@
 
     <profiles>
         <profile>
-            <id>etics</id>
+            <id>gLite</id>
             <build>
                 <finalName>pdp</finalName>
             </build>
         </profile>
         <profile>
+            <id>standalone</id>
+            <build>
+                <finalName>pdp</finalName>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <!-- overwrite default descriptor to use -->
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/assembly/standalone.xml</descriptor>
+                            </descriptors>
+                            <attach>false</attach>
+                            <ignoreDirFormatExtensions>false</ignoreDirFormatExtensions>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create-emi-symlinks</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${project.build.directory}/pdp-standalone.dir</workingDirectory>
+                                    <executable>/bin/sh</executable>
+                                    <arguments>
+                                        <argument>${basedir}/src/script/package/emi-symlinks.sh</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>tar-gz-standalone</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${project.build.directory}</workingDirectory>
+                                    <executable>tar</executable>
+                                    <arguments>
+                                        <argument>-C</argument>
+                                        <argument>pdp-standalone.dir</argument>
+                                        <argument>-cvzf</argument>
+                                        <argument>${project.artifactId}-${project.version}-standalone.tar.gz</argument>
+                                        <argument>.</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>delete-emi-symlinks</id>
+                                <phase>pre-clean</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${project.build.directory}/pdp-standalone.dir</workingDirectory>
+                                    <executable>/bin/rm</executable>
+                                    <arguments>
+                                        <argument>-f</argument>                                        
+                                        <argument>usr/sbin/pdpctl</argument>
+                                        <argument>usr/share/argus/pdp/conf</argument>
+                                        <argument>usr/share/argus/pdp/doc</argument>
+                                        <argument>usr/share/argus/pdp/lib</argument>
+                                        <argument>usr/share/argus/pdp/logs</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>        
+        <profile>
             <id>EMI</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <build>
                 <finalName>pdp</finalName>
                 <plugins>
@@ -282,7 +361,8 @@
                                     <workingDirectory>${project.build.directory}/pdp-fakeroot.dir</workingDirectory>
                                     <executable>/bin/rm</executable>
                                     <arguments>
-                                        <argument>-vf</argument>
+                                        <argument>-f</argument>                                        
+                                        <argument>usr/sbin/pdpctl</argument>
                                         <argument>usr/share/argus/pdp/conf</argument>
                                         <argument>usr/share/argus/pdp/doc</argument>
                                         <argument>usr/share/argus/pdp/lib</argument>
@@ -327,7 +407,7 @@
     </licenses>
 
     <organization>
-        <name>EGEE Collaboration</name>
-        <url>http://www.eu-egee.org/</url>
+        <name>EMI - European Middleware Initiative</name>
+        <url>http://www.eu-emi.eu/</url>
     </organization>
 </project>
