@@ -24,12 +24,15 @@ import net.jcip.annotations.ThreadSafe;
 import org.glite.authz.common.ServiceMetrics;
 import org.glite.authz.common.util.Strings;
 
+import org.joda.time.DateTime;
+import org.joda.time.chrono.ISOChronology;
+
 /** Extension to {@link ServiceMetrics} that adds addition information about the current policy. */
 @ThreadSafe
 public class PDPMetrics extends ServiceMetrics {
 
     /** Instant the policy was fetched from the PAP, in milliseconds in the local timezone. */
-    private long policyLoadInstant;
+    private long policyLoadTimeMillis;
 
     /** ID of the policy currently being used by the PDP. */
     private String policyId;
@@ -39,7 +42,7 @@ public class PDPMetrics extends ServiceMetrics {
 
     /** Constructor. */
     public PDPMetrics() {
-        super(Version.getServiceIdentifier());
+        super(Version.getServiceName(), Version.getServiceVersion());
     }
 
     /**
@@ -52,12 +55,12 @@ public class PDPMetrics extends ServiceMetrics {
     }
 
     /**
-     * Gets the instant the policy was fetched from the PAP, in milliseconds in the local timezone.
+     * Gets the instant the policy was fetched from the PAP, in milliseconds (epoch) in the local timezone.
      * 
      * @return the instant the policy was fetched from the PAP
      */
     public long getPolicyLoadInstant() {
-        return policyLoadInstant;
+        return policyLoadTimeMillis;
     }
 
     /**
@@ -78,7 +81,7 @@ public class PDPMetrics extends ServiceMetrics {
      */
     public synchronized void updatePolicyInformation(String id, String version) {
         policyId = Strings.safeTrimOrNullString(id);
-        policyLoadInstant = System.currentTimeMillis();
+        policyLoadTimeMillis = System.currentTimeMillis();
         policyVersion = Strings.safeTrimOrNullString(version);
     }
 
@@ -87,15 +90,21 @@ public class PDPMetrics extends ServiceMetrics {
      * 
      * This method also adds the following lines.
      * <ul>
-     * <li>policy load instant: <i>policy_load_instant</i></li>
-     * <li>current policy: <i>current_policy_id</i></li>
-     * <li>current policy version: <i>current_policy_version</i></li>
+     * <li>PolicyLoadTime: <i>policy_load_time_iso_utc</i></li>
+     * <li>PolicyLoadTimeMillis: <i>policy_load_timemillis</i></li>
+     * <li>CurrentPolicy: <i>current_policy_id</i></li>
+     * <li>CurrentPolicyVersion: <i>current_policy_version</i></li>
      * </ul>
      */
     public void printServiceMetrics(PrintWriter writer) {
         super.printServiceMetrics(writer);
-        writer.println("policy_load_instant: " + policyLoadInstant);
-        writer.println("current_policy: " + policyId);
-        writer.println("current_policy_version: " + policyVersion);
+        DateTime policyLoadTime= null;
+        if (policyLoadTimeMillis > 0) {
+            policyLoadTime= new DateTime(policyLoadTimeMillis).withChronology(ISOChronology.getInstanceUTC());
+        }
+        writer.println("PolicyLoadTime: " + policyLoadTime);
+        writer.println("PolicyLoadTimeMillis: " + policyLoadTimeMillis);
+        writer.println("CurrentPolicy: " + policyId);
+        writer.println("CurrentPolicyVersion: " + policyVersion);
     }
 }
