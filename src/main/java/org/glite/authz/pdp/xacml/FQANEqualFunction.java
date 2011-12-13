@@ -18,7 +18,7 @@
 package org.glite.authz.pdp.xacml;
 
 import org.glite.authz.common.fqan.FQAN;
-import org.glite.authz.common.profile.AuthorizationProfileConstants;
+import org.glite.authz.common.profile.GLiteAuthorizationProfileConstants;
 
 import org.herasaf.xacml.core.function.FunctionProcessingException;
 import org.herasaf.xacml.core.function.AbstractFunction;
@@ -31,7 +31,7 @@ public class FQANEqualFunction extends AbstractFunction {
 
     /** {@inheritDoc} */
     public String getFunctionId() {
-        return AuthorizationProfileConstants.ID_ALGORITHM_FQAN_EXACT_MATCH;
+        return GLiteAuthorizationProfileConstants.ID_ALGORITHM_FQAN_EXACT_MATCH;
     }
 
     /** {@inheritDoc} */

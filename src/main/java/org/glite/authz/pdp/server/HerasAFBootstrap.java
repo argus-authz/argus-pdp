@@ -21,7 +21,7 @@ import java.util.HashMap;
 
 import net.jcip.annotations.ThreadSafe;
 
-import org.glite.authz.common.profile.AuthorizationProfileConstants;
+import org.glite.authz.common.profile.GLiteAuthorizationProfileConstants;
 import org.glite.authz.pdp.xacml.FQANDataTypeAttribute;
 import org.glite.authz.pdp.xacml.FQANEqualFunction;
 import org.glite.authz.pdp.xacml.FQANRegexpFunction;
@@ -331,7 +331,7 @@ public final class HerasAFBootstrap {
         dataTypes.put(TimeDataTypeAttribute.ID, new TimeDataTypeAttribute());
         dataTypes.put(X500DataTypeAttribute.ID, new X500DataTypeAttribute());
         dataTypes.put(YearMonthDurationDataTypeAttribute.ID, new YearMonthDurationDataTypeAttribute());
-        dataTypes.put(AuthorizationProfileConstants.DATATYPE_FQAN, new FQANDataTypeAttribute());
+        dataTypes.put(GLiteAuthorizationProfileConstants.DATATYPE_FQAN, new FQANDataTypeAttribute());
 
         URNToDataTypeConverter.setDataTypeAttributes(dataTypes);
     }
@@ -437,7 +437,7 @@ public final class HerasAFBootstrap {
         functions.put(TimeEqualFunction.ID, new TimeEqualFunction());
         functions.put(X500NameEqualFunction.ID, new X500NameEqualFunction());
         functions.put(YearMonthDurationEqualFunction.ID, new YearMonthDurationEqualFunction());
-        functions.put(AuthorizationProfileConstants.ID_ALGORITHM_FQAN_EXACT_MATCH, new FQANEqualFunction());
+        functions.put(GLiteAuthorizationProfileConstants.ID_ALGORITHM_FQAN_EXACT_MATCH, new FQANEqualFunction());
 
         // higher order bag functions
         functions.put(AllOfAllFunction.ID, new AllOfAllFunction());
@@ -494,7 +494,7 @@ public final class HerasAFBootstrap {
         functions.put(RFC822NameRegexpMatchFunction.ID, new RFC822NameRegexpMatchFunction());
         functions.put(StringRegexpMatchFunction.ID, new StringRegexpMatchFunction());
         functions.put(X500NameRegexpMatchFunction.ID, new X500NameRegexpMatchFunction());
-        functions.put(AuthorizationProfileConstants.ID_ALGORITHM_FQAN_REGEXP_MATCH, new FQANRegexpFunction());
+        functions.put(GLiteAuthorizationProfileConstants.ID_ALGORITHM_FQAN_REGEXP_MATCH, new FQANRegexpFunction());
 
         // set functions
         functions.put(AnyURIAtLeastOneMemberOfFunction.ID, new AnyURIAtLeastOneMemberOfFunction());

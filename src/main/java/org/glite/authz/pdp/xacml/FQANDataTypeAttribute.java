@@ -20,7 +20,7 @@ package org.glite.authz.pdp.xacml;
 import java.text.ParseException;
 
 import org.glite.authz.common.fqan.FQAN;
-import org.glite.authz.common.profile.AuthorizationProfileConstants;
+import org.glite.authz.common.profile.GLiteAuthorizationProfileConstants;
 
 import org.herasaf.xacml.core.SyntaxException;
 import org.herasaf.xacml.core.dataTypeAttribute.impl.AbstractDataTypeAttribute;
@@ -33,7 +33,7 @@ public class FQANDataTypeAttribute extends AbstractDataTypeAttribute<FQAN> {
 
     /** {@inheritDoc} */
     public String getDatatypeURI() {
-        return AuthorizationProfileConstants.DATATYPE_FQAN;
+        return GLiteAuthorizationProfileConstants.DATATYPE_FQAN;
     }
     
     /** {@inheritDoc} */
