@@ -35,7 +35,6 @@ import org.glite.authz.pdp.pip.IniPIPConfigurationParserHelper;
 import org.glite.authz.pdp.pip.PolicyInformationPoint;
 import org.glite.voms.VOMSTrustManager;
 import org.ini4j.Ini;
-import org.ini4j.Ini.Section;
 import org.opensaml.common.binding.security.IssueInstantRule;
 import org.opensaml.ws.security.SecurityPolicy;
 import org.opensaml.ws.security.provider.BasicSecurityPolicy;
@@ -99,7 +98,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
      * 
      * @return the port value, or the default port {@value #DEFAULT_PORT} if it is not set
      */
-    protected int getPort(Section configSection) {
+    protected int getPort(Ini.Section configSection) {
         return IniConfigUtil.getInt(configSection, PORT_PROP, DEFAULT_PORT, 1, 65535);
     }
 
@@ -108,7 +107,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
      * 
      * @return the admin port value, or the default admin port {@value #DEFAULT_ADMIN_PORT} if it is not set
      */
-    protected int getAdminPort(Section configSection) {
+    protected int getAdminPort(Ini.Section configSection) {
         return IniConfigUtil.getInt(configSection, ADMIN_PORT_PROP, DEFAULT_ADMIN_PORT, 1, 65535);
     }
 
@@ -140,7 +139,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
         log.info("Processing PDP {} configuration section", SERVICE_SECTION_HEADER);
         processServiceSection(pdpIni, configBuilder);
 
-        Section serviceSection = pdpIni.get(SERVICE_SECTION_HEADER);
+        Ini.Section serviceSection = pdpIni.get(SERVICE_SECTION_HEADER);
 
         List<PolicyInformationPoint> pips = IniPIPConfigurationParserHelper.processPolicyInformationPoints(pdpIni,
                 serviceSection, configBuilder);
@@ -168,7 +167,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
      */
     protected void processPAPConfiguration(Ini iniFile, PDPConfigurationBuilder configBuilder)
             throws ConfigurationException {
-        Section configSection = iniFile.get(POLICY_SECTION_HEADER);
+        Ini.Section configSection = iniFile.get(POLICY_SECTION_HEADER);
         if (configSection == null) {
             String errorMsg = "PDP INI configuration does not contain the rquired '" + POLICY_SECTION_HEADER
                     + "' INI section";
@@ -208,7 +207,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
      * 
      * @return the generated security policy
      */
-    protected SecurityPolicy buildSecurityPolicy(Section configSection) {
+    protected SecurityPolicy buildSecurityPolicy(Ini.Section configSection) {
         BasicSecurityPolicy securityPolicy = new BasicSecurityPolicy();
 
         int clockSkew = IniConfigUtil.getInt(configSection, CLOCK_SKEW_PROP, DEFAULT_CLOCK_SKEW, 1, Integer.MAX_VALUE);

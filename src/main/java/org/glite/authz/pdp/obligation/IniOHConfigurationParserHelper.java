@@ -25,7 +25,6 @@ import org.glite.authz.common.config.ConfigurationException;
 import org.glite.authz.common.config.IniConfigUtil;
 import org.glite.authz.common.util.Strings;
 import org.ini4j.Ini;
-import org.ini4j.Ini.Section;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +48,7 @@ public class IniOHConfigurationParserHelper {
      * 
      * @throws ConfigurationException thrown if there is a problem building the obligations handlers
      */
-    public static ObligationService processObligationHandlers(Ini iniFile, Section configSection,
+    public static ObligationService processObligationHandlers(Ini iniFile, Ini.Section configSection,
             AbstractConfigurationBuilder<?> configBuilder) throws ConfigurationException {
         ObligationService service = new ObligationService();
         if (configSection.containsKey(OH_PROP)) {
@@ -84,7 +83,7 @@ public class IniOHConfigurationParserHelper {
      * @throws ConfigurationException throw if a obligation handler can not be instantiated
      */
     @SuppressWarnings("unchecked")
-    private static AbstractObligationHandler buildObligationHandler(Section ohConfig,
+    private static AbstractObligationHandler buildObligationHandler(Ini.Section ohConfig,
             AbstractConfigurationBuilder<?> configBuilder) throws ConfigurationException {
         LOG.info("Loading Obligation Handler {}", ohConfig.getName());
         String parserClassName = IniConfigUtil.getString(ohConfig, IniOHConfigurationParser.PARSER_CLASS_PROP);

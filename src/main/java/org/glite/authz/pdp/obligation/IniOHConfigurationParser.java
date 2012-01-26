@@ -21,9 +21,9 @@ import net.jcip.annotations.ThreadSafe;
 
 import org.glite.authz.common.config.AbstractConfigurationBuilder;
 import org.glite.authz.common.config.ConfigurationException;
-import org.ini4j.Ini.Section;
+import org.ini4j.Ini;
 
-/** A parser that transforms an {@link Section} in to a {@link AbstractObligationHandler}. */
+/** A parser that transforms an {@link Ini.Section} in to a {@link AbstractObligationHandler}. */
 @ThreadSafe
 public interface IniOHConfigurationParser {
 
@@ -37,7 +37,7 @@ public interface IniOHConfigurationParser {
     public static final String PRECEDENCE_PROP = "precedence";
 
     /**
-     * Creates a {@link AbstractObligationHandler} from the information within the {@link Section}.
+     * Creates a {@link AbstractObligationHandler} from the information within the {@link Ini.Section}.
      * 
      * @param iniConfig the INI configuration for the obligation handler
      * @param configBuilder the configuration builder currently being populated
@@ -47,6 +47,6 @@ public interface IniOHConfigurationParser {
      * @throws ConfigurationException thrown if there is a problem creating the obligation handler from the given
      *             information
      */
-    public AbstractObligationHandler parse(Section iniConfig, AbstractConfigurationBuilder<?> configBuilder)
+    public AbstractObligationHandler parse(Ini.Section iniConfig, AbstractConfigurationBuilder<?> configBuilder)
             throws ConfigurationException;
 }

@@ -27,7 +27,6 @@ import org.glite.authz.common.config.IniConfigUtil;
 import org.glite.authz.common.util.LazyList;
 import org.glite.authz.common.util.Strings;
 import org.ini4j.Ini;
-import org.ini4j.Ini.Section;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +50,7 @@ public class IniPIPConfigurationParserHelper {
      * 
      * @throws ConfigurationException thrown if there is a problem building the policy information points
      */
-    public static List<PolicyInformationPoint> processPolicyInformationPoints(Ini iniFile, Section configSection,
+    public static List<PolicyInformationPoint> processPolicyInformationPoints(Ini iniFile, Ini.Section configSection,
             AbstractConfigurationBuilder<?> configBuilder) throws ConfigurationException {
         List<PolicyInformationPoint> pips = new LazyList<PolicyInformationPoint>();
         if (configSection.containsKey(PIP_PROP)) {
@@ -85,7 +84,7 @@ public class IniPIPConfigurationParserHelper {
      * @throws ConfigurationException throw if a PIP can not be instantiated
      */
     @SuppressWarnings("unchecked")
-    private static PolicyInformationPoint buildPolicyInformationPoint(Section pipConfig,
+    private static PolicyInformationPoint buildPolicyInformationPoint(Ini.Section pipConfig,
             AbstractConfigurationBuilder<?> configBuilder) throws ConfigurationException {
         LOG.info("Loading Policy Information Point {}", pipConfig.getName());
         String parserClassName = IniConfigUtil.getString(pipConfig, IniPIPConfigurationParser.PARSER_CLASS_PROP);

@@ -21,9 +21,9 @@ import net.jcip.annotations.ThreadSafe;
 
 import org.glite.authz.common.config.AbstractConfigurationBuilder;
 import org.glite.authz.common.config.ConfigurationException;
-import org.ini4j.Ini.Section;
+import org.ini4j.Ini;
 
-/** A parser that transforms an {@link Section} in to a {@link PolicyInformationPoint}. */
+/** A parser that transforms an {@link Ini.Section} in to a {@link PolicyInformationPoint}. */
 @ThreadSafe
 public interface IniPIPConfigurationParser {
 
@@ -31,7 +31,7 @@ public interface IniPIPConfigurationParser {
     public static final String PARSER_CLASS_PROP = "parserClass";
 
     /**
-     * Created a {@link PolicyInformationPoint} from the information within the {@link Section}.
+     * Created a {@link PolicyInformationPoint} from the information within the {@link Ini.Section}.
      * 
      * @param iniConfig the INI configuration for the PIP
      * @param configBuilder the configuration builder currently being populated
@@ -40,6 +40,6 @@ public interface IniPIPConfigurationParser {
      * 
      * @throws ConfigurationException thrown if there is a problem creating the PIP from the given information
      */
-    public PolicyInformationPoint parse(Section iniConfig, AbstractConfigurationBuilder<?> configBuilder)
+    public PolicyInformationPoint parse(Ini.Section iniConfig, AbstractConfigurationBuilder<?> configBuilder)
             throws ConfigurationException;
 }
