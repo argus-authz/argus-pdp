@@ -1,0 +1,6 @@
+# stop the PDP
+/sbin/service argus-pdp stop > /dev/null 2>&1 || :
+# delete all old bundled jar files
+rm -f /var/lib/argus/pdp/lib/endorsed/*.jar 
+rm -f /var/lib/argus/pdp/lib/*.jar
+
