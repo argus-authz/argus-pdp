@@ -36,6 +36,7 @@ import org.glite.authz.common.http.JettyShutdownTask;
 import org.glite.authz.common.http.JettySslSelectChannelConnector;
 import org.glite.authz.common.http.ServiceMetricsServlet;
 import org.glite.authz.common.http.StatusCommand;
+import org.glite.authz.common.http.SystemExitTask;
 import org.glite.authz.common.http.TimerShutdownTask;
 import org.glite.authz.common.logging.AccessLoggingFilter;
 import org.glite.authz.common.logging.LoggingReloadTask;
@@ -72,6 +73,9 @@ public final class PDPDaemon {
 
     /** System property name PDP_LOGDIR path is bound to. */
     public static final String PDP_LOGDIR_PROP= "org.glite.authz.pdp.logdir";
+
+    /** System property name PDP_GRACEFUL to set to force a graceful shutdown  */
+    public static final String PDP_GRACEFUL_PROP= "org.glite.authz.pdp.server.graceful";
 
     /** Default admin port: {@value} */
     public static int DEFAULT_ADMIN_PORT= 8153;
@@ -169,7 +173,11 @@ public final class PDPDaemon {
         Server httpServer= new Server();
         httpServer.setSendServerVersion(false);
         httpServer.setSendDateHeader(false);
-        httpServer.setGracefulShutdown(5000);
+        if (System.getProperty(PDP_GRACEFUL_PROP)!=null) {
+            LOG.debug("Graceful shutdown enabled: " + PDP_GRACEFUL_PROP );
+            httpServer.setGracefulShutdown(1000); // 1 sec
+        }
+        httpServer.setStopAtShutdown(true);
 
         BlockingQueue<Runnable> requestQueue;
         if (daemonConfig.getMaxRequestQueueSize() < 1) {
@@ -248,10 +256,11 @@ public final class PDPDaemon {
                                                               adminPort,
                                                               daemonConfig.getAdminPassword());
 
-        // TODO: move the status to another service
         adminService.registerAdminCommand(new StatusCommand(daemonConfig.getServiceMetrics()));
         adminService.registerAdminCommand(new ReloadPolicyCommand(policyRepository));
 
+        // first shutdown task will force a System.exit(0) after 60 sec.
+        adminService.registerShutdownTask(new SystemExitTask(60000));
         adminService.registerShutdownTask(new TimerShutdownTask(backgroundTaskTimer));
         adminService.registerShutdownTask(new JettyShutdownTask(daemonService));
 
