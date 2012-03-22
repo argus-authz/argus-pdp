@@ -174,7 +174,7 @@ public final class PDPDaemon {
         httpServer.setSendServerVersion(false);
         httpServer.setSendDateHeader(false);
         if (System.getProperty(PDP_GRACEFUL_PROP)!=null) {
-            LOG.debug("Graceful shutdown enabled: " + PDP_GRACEFUL_PROP );
+            LOG.info("Graceful shutdown enabled: " + PDP_GRACEFUL_PROP );
             httpServer.setGracefulShutdown(1000); // 1 sec
         }
         httpServer.setStopAtShutdown(true);
