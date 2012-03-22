@@ -59,8 +59,8 @@ else
 fi
 
 PDP_PROG="${NAME}"
-SHUTDOWN_WAIT=120
-KILL_WAIT=150
+SHUTDOWN_WAIT=15
+KILL_WAIT=30
 HAS_LOCK=0
 PDP_LOCK=
 PDP_PID=${PDP_PID:-"/var/run/${NAME}.pid"}
@@ -137,7 +137,7 @@ echo -n "Stopping ${PDP_PROG}... "
         if [ $RETURN_CODE -eq 0 ]; then
             count=0
             if [ -f "$PDP_PID" ]; then
-                read kpid < $PEPD_PID
+                read kpid < $PDP_PID
                 until [ $(ps --pid $kpid | grep -c $kpid) -eq 0 ] || [ $count -gt $SHUTDOWN_WAIT ]; do
                     sleep 1
                     let count=${count}+1
