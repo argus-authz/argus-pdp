@@ -36,7 +36,7 @@
 #            Joel Casutt <argus-support@cern.ch>
 #
 # Version: V2.1
-# Date: 10/10/2011
+# Date: 03/23/2011
 # $Id$
 ###############################################################################
 # set -x
@@ -126,13 +126,13 @@ function stop() {
         count=0
         killed=false
         MAX_WAIT=$[$KILL_WAIT+$SHUTDOWN_WAIT]
-        $PEPDCTL stop
+        $PDPCTL stop
         read kpid < $PDP_PID
         until [ $(ps --pid $kpid | grep -c $kpid) -eq 0 ]; do
             sleep 1
             let count=${count}+1
             if [ $count -ge $SHUTDOWN_WAIT ] && ! $killed; then
-                log_warning_msg "waited ${SHUTDOWN_WAIT} s, now killing"
+                echo -n "waited ${SHUTDOWN_WAIT} s, force kill"
                 kill -9 $kpid
                 killed=true
             fi
@@ -149,10 +149,21 @@ function stop() {
 function status() {
     _current_state
     state=$?
-    if [ state -eq 5 ]; then
+    if [ $state -eq 5 ]; then
         echo "${PDP_PROG} is not running..."
     else
         $PDPCTL status
+    fi
+}
+
+# Function to reload the policies from the pap
+function reloadpolicy() {
+    _current_state
+    state=$?
+    if [ $state -eq 5 ]; then
+        echo "${PDP_PROG} is not running..."
+    else
+       $PDPCTL reloadPolicy
     fi
 }
 
@@ -219,7 +230,7 @@ case "$1" in
         $PDPCTL version
         ;;
     reloadpolicy)
-        $PDPCTL reloadPolicy
+        reloadpolicy
         ;;
     *)
         echo "Usage: $0 {start|stop|restart|status|version|reloadpolicy}"
