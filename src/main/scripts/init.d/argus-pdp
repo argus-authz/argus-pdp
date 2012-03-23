@@ -64,7 +64,6 @@ KILL_WAIT=15
 HAS_LOCK=0
 PDP_LOCK=
 PDP_PID=${PDP_PID:-"/var/run/${NAME}.pid"}
-RETURN_CODE=0
 
 # See if there is an appropriate location for the lock-file, if not, do not use a lock-file
 if [ -d "/var/lock/subsys" ]; then
@@ -151,7 +150,6 @@ function status() {
     state=$?
     if [ state -eq 5 ]; then
         echo "${PDP_PROG} is not running..."
-        RETURN_CODE=4
     else
         $PDPCTL status
     fi
@@ -228,4 +226,4 @@ case "$1" in
         ;;
 esac
 
-exit $RETURN_CODE
+exit $?
