@@ -35,7 +35,7 @@
 #            Valery Tschopp <argus-support@cern.ch>
 #            Joel Casutt <argus-support@cern.ch>
 #
-# Version: V2.1
+# Version: V2.2
 # Date: 03/23/2011
 # $Id$
 ###############################################################################
@@ -151,6 +151,19 @@ function status() {
     state=$?
     if [ $state -eq 5 ]; then
         echo "${PDP_PROG} is not running..."
+        return $state
+    else
+        echo "${PDP_PROG} is running..."
+    fi
+}
+
+# Function to read the info of the PDP
+function info() {
+    _current_state
+    state=$?
+    if [ $state -eq 5 ]; then
+        echo "${PDP_PROG} is not running..."
+        return $state
     else
         $PDPCTL status
     fi
@@ -162,8 +175,21 @@ function reloadpolicy() {
     state=$?
     if [ $state -eq 5 ]; then
         echo "${PDP_PROG} is not running..."
+        return $state
     else
        $PDPCTL reloadPolicy
+    fi
+}
+
+# Function to read the version of the PDP
+function version() {
+     _current_state
+    state=$?
+    if [ $state -eq 5 ]; then
+        echo "${PDP_PROG} is not running..."
+        return $state
+    else
+       $PDPCTL version
     fi
 }
 
@@ -226,14 +252,17 @@ case "$1" in
     status)
         status
         ;;
+    info)
+        info
+        ;;
     version)
-        $PDPCTL version
+        version
         ;;
     reloadpolicy)
         reloadpolicy
         ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status|version|reloadpolicy}"
+        echo "Usage: $0 {start|stop|restart|status|info|version|reloadpolicy}"
         exit 1
         ;;
 esac
