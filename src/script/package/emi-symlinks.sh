@@ -33,7 +33,7 @@ create_symlink () {
 }
 
 # pdpctl: /usr/sbin/pdpctl -> /usr/share/argus/pdp/sbin/pdpctl
-mkdir -p usr/sbin
+mkdir -vp usr/sbin
 create_symlink ../../usr/share/argus/$NAME/sbin/$NAMECTL usr/sbin/$NAMECTL
 
 # conf: /usr/share/argus/pdp/conf -> /etc/argus/pdp
@@ -43,7 +43,7 @@ create_symlink $root_prefix/etc/argus/$NAME $HOME/conf
 create_symlink $root_prefix/var/lib/argus/$NAME/lib $HOME/lib
 
 # logs: /usr/share/argus/pdp/logs -> /var/log/argus/pdp
-mkdir -p $HOME/logs
+mkdir -vp $HOME/logs
 create_symlink $root_prefix/var/log/argus/$NAME $HOME/logs
 
 # doc: /usr/share/argus/pdp/doc -> /usr/share/doc/argus/pdp
