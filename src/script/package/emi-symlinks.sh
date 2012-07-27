@@ -33,6 +33,7 @@ create_symlink () {
 }
 
 # pdpctl: /usr/sbin/pdpctl -> /usr/share/argus/pdp/sbin/pdpctl
+mkdir -p usr/sbin
 create_symlink ../../usr/share/argus/$NAME/sbin/$NAMECTL usr/sbin/$NAMECTL
 
 # conf: /usr/share/argus/pdp/conf -> /etc/argus/pdp
