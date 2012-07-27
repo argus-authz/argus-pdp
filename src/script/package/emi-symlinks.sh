@@ -27,7 +27,7 @@ root_prefix="../../../.."
 
 create_symlink () {
 	if [ -e $2 ]; then
-		rm -rf $2
+		rm -vrf $2
 	fi
 	ln -vs $1 $2
 }
@@ -43,7 +43,6 @@ create_symlink $root_prefix/etc/argus/$NAME $HOME/conf
 create_symlink $root_prefix/var/lib/argus/$NAME/lib $HOME/lib
 
 # logs: /usr/share/argus/pdp/logs -> /var/log/argus/pdp
-mkdir -vp $HOME/logs
 create_symlink $root_prefix/var/log/argus/$NAME $HOME/logs
 
 # doc: /usr/share/argus/pdp/doc -> /usr/share/doc/argus/pdp
