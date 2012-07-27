@@ -32,6 +32,9 @@ create_symlink () {
 	ln -vs $1 $2
 }
 
+# DEBUG
+ls -l $HOME
+
 # pdpctl: /usr/sbin/pdpctl -> /usr/share/argus/pdp/sbin/pdpctl
 mkdir -vp usr/sbin
 create_symlink ../../usr/share/argus/$NAME/sbin/$NAMECTL usr/sbin/$NAMECTL
