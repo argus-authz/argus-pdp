@@ -42,6 +42,7 @@ public class DateTimeTest extends TestCase {
         datatypeFactory= DatatypeFactory.newInstance();
         now= new GregorianCalendar();
         nowUTC= new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        System.out.println("-------" + this.getName() + "---------");
     }
 
     public void testDateTime() {
