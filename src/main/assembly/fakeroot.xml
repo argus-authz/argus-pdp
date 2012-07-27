@@ -44,8 +44,10 @@ Installed in a fakeroot directory structure.
             <scope>runtime</scope>
             <outputDirectory>/var/lib/argus/pdp/lib/endorsed</outputDirectory>
             <includes>
-                <include>org.apache.xerces:*</include>
-                <include>org.apache.xalan:*</include>
+                <include>xerces:*</include>
+                <include>xml-apis:*</include>
+                <include>xml-resolver:*</include>
+                <include>xalan:*</include>
             </includes>
             <fileMode>0644</fileMode>
         </dependencySet>
@@ -54,12 +56,14 @@ Installed in a fakeroot directory structure.
     <fileSets>
         <!-- /usr/share/argus/pdp home directory -->
         <fileSet>
-            <directory>src/home-tmpl/empty-dir</directory>
+            <directory>src/main/empty-dir</directory>
+            <excludes><exclude>.empty</exclude></excludes>
             <outputDirectory>/usr/share/argus/pdp</outputDirectory>
         </fileSet>
         <!-- /usr/sbin directory -->
         <fileSet>
-            <directory>src/home-tmpl/empty-dir</directory>
+            <directory>src/main/empty-dir</directory>
+            <excludes><exclude>.empty</exclude></excludes>
             <outputDirectory>/usr/sbin</outputDirectory>
         </fileSet>
         <!-- /usr/share/argus/pdp/sbin/pdpctl control script -->
@@ -89,7 +93,8 @@ Installed in a fakeroot directory structure.
         </fileSet>
         <!-- /var/log/argus/pdp logging directory -->
         <fileSet>
-            <directory>src/home-tmpl/empty-dir</directory>
+            <directory>src/main/empty-dir</directory>
+            <excludes><exclude>.empty</exclude></excludes>
             <outputDirectory>/var/log/argus/pdp</outputDirectory>
             <directoryMode>0750</directoryMode>
         </fileSet>        
