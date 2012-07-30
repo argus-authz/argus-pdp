@@ -1,0 +1,117 @@
+## Turn off meaningless jar repackaging on SL6
+%define __jar_repack 0
+
+Name: argus-pdp
+
+Version: 1.5.2
+Release: 1%{?dist}
+Summary: Argus PDP
+
+Group: System Environment/Daemons
+License: ASL 2.0
+URL: https://twiki.cern.ch/twiki/bin/view/EGEE/AuthorizationFramework
+
+Source: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildArch: noarch
+
+BuildRequires: java-devel
+BuildRequires: maven
+
+Requires: java
+Requires: redhat-lsb
+Requires: argus-pdp-pep-common
+Requires: emi-trustmanager
+Requires: voms-api-java
+Requires: bouncycastle
+
+%description 
+The Argus Authorization Service renders consistent authorization decisions for distributed services (e.g., user interfaces, portals, computing elements, storage elements). The service is based on the XACML standard, and uses authorization policies to determine if a user is allowed or denied to perform a certain action on a particular service.
+The Argus Authorization Service is composed of three main components:
+- The Policy Administration Point (PAP) provides the tools to author authorization policies, organize them in the local repository and configure policy distribution among remote PAPs.
+- The Policy Decision Point (PDP) implements the authorization engine, and is responsible for the evaluation of the authorization requests against the XACML policies retrieved from the PAP.
+- The Policy Enforcement Point Server (PEP Server) ensures the integrity and consistency of the authorization requests received from the PEP clients. Lightweight PEP client libraries are also provided to ease the integration and interoperability with other EMI services or components. 
+
+%prep
+%setup -q -n argus-pdp
+
+%build
+mvn -B -s @@BUILD_SETTINGS@@ package
+
+%install
+rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT
+tar -C $RPM_BUILD_ROOT -xvzf target/%{name}-%{version}.tar.gz
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%pre
+# on update stop the service, and clean up the lib directory
+if [ $1 -gt 1 ] ; then
+    /sbin/service argus-pdp stop > /dev/null 2>&1 || :
+    # delete all old bundled jar files and links
+    if [ -d /var/lib/argus/pdp/lib ] ; then
+        rm -f /var/lib/argus/pdp/lib/endorsed/*.jar 
+        rm -f /var/lib/argus/pdp/lib/*.jar
+    fi
+fi
+
+%preun
+# on uninstall stop and deregister the service
+if [ $1 -eq 0 ] ; then
+    /sbin/service argus-pdp stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del argus-pdp
+fi
+
+%post
+# create links to /usr/share/java jar files
+for jarname in argus-pdp-pep-common voms-api-java trustmanager bcprov ; do
+    [ -f /usr/share/java/$jarname.jar ] || exit 1
+    ln -fs /usr/share/java/$jarname.jar /var/lib/argus/pdp/lib
+done
+# on install register the service in init.d
+if [ $1 -eq 1 ]; then 
+
+    /sbin/chkconfig --add argus-pdp
+
+fi
+
+%postun
+# on update restart the service 
+if [ $1 -eq 1 ] ; then
+    /sbin/service argus-pdp start
+fi
+
+%files
+%defattr(-,root,root)
+%{_initrddir}/argus-pdp
+%dir ${_sysconfdir}/argus/pdp
+%config(noreplace) ${_sysconfdir}/argus/pdp/logging.xml
+%config(noreplace) ${_sysconfdir}/argus/pdp/pdp.ini
+%config(noreplace) ${_sysconfdir}/sysconfig/argus-pdp
+${_sbindir}/pdpctl
+%dir ${_datadir}/argus/pdp
+%dir ${_datadir}/argus/pdp/sbin
+${_datadir}/argus/pdp/logs
+${_datadir}/argus/pdp/conf
+${_datadir}/argus/pdp/doc
+${_datadir}/argus/pdp/lib
+${_datadir}/argus/pdp/sbin/pdpctl
+%dir %{_defaultdocdir}/argus/pdp
+%{_defaultdocdir}/argus/pdp/COPYRIGHT
+%{_defaultdocdir}/argus/pdp/LICENSE
+%{_defaultdocdir}/argus/pdp/RELEASE-NOTES
+%dir %{_localstatedir}/lib/argus/pdp/lib
+%dir %{_localstatedir}/lib/argus/pdp/lib/endorsed
+%{_localstatedir}/lib/argus/pdp/lib/*.jar
+%{_localstatedir}/lib/argus/pdp/lib/endorsed/*.jar
+%dir %{_localstatedir}/log/argus/pdp
+
+%changelog
+* Mon Jul 30 2012 Valery Tschopp <valery.tschopp@switch.ch> 1.5.2-1
+- Self managed packaging with spec file.
+
+* Tue Apr 3 2012 Valery Tschopp <valery.tschopp@switch.ch> 1.5.1-1
+- Initial Argus PDP for EMI 2.
+
