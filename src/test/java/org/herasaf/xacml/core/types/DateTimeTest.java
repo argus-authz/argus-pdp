@@ -75,7 +75,7 @@ public class DateTimeTest extends TestCase {
         System.out.println("XACML: " + d);
     }
 
-    public void testDateUTC() {
+    public void disabled_testDateUTC() {
         XMLGregorianCalendar xmlDate= datatypeFactory.newXMLGregorianCalendar(nowUTC);
         xmlDate.setHour(DatatypeConstants.FIELD_UNDEFINED);
         xmlDate.setMinute(DatatypeConstants.FIELD_UNDEFINED);
@@ -99,7 +99,7 @@ public class DateTimeTest extends TestCase {
         System.out.println("XACML: " + t);
     }
 
-    public void testTimeUTC() {
+    public void disabled_testTimeUTC() {
         XMLGregorianCalendar xmlTime= datatypeFactory.newXMLGregorianCalendar(nowUTC);
         xmlTime.setYear(DatatypeConstants.FIELD_UNDEFINED);
         xmlTime.setMonth(DatatypeConstants.FIELD_UNDEFINED);
