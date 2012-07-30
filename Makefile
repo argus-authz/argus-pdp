@@ -13,17 +13,18 @@ all: package rpm
 clean:	
 	rm -rf target $(rpmbuild_dir) stage tgz RPMS $(spec)
 
+spec:
+	sed -e 's#@@BUILD_SETTINGS@@# #g' $(spec).in > $(spec)
+
 package: spec
 	mvn -B package
-
-package-etics: spec-etics
-	mvn -B -s $(settings_file) package
 
 spec-etics:
 	sed -e 's#@@BUILD_SETTINGS@@#-s $(settings_file)#g' $(spec).in > $(spec)
 
-spec:
-	sed -e 's#@@BUILD_SETTINGS@@# #g' $(spec).in > $(spec)
+package-etics: spec-etics
+	mvn -B -s $(settings_file) package
+
 
 rpm: 
 	mkdir -p $(rpmbuild_dir)/BUILD $(rpmbuild_dir)/RPMS \
@@ -32,7 +33,7 @@ rpm:
 	cp target/$(name)-$(version).src.tar.gz $(rpmbuild_dir)/SOURCES/$(name)-$(version).tar.gz
 	rpmbuild --nodeps -v -ba $(spec) --define "_topdir $(rpmbuild_dir)"
 
-etics: package-etics rpm
+etics: rpm
 	mkdir -p tgz RPMS
 	cp target/*.tar.gz tgz
 	cp -r $(rpmbuild_dir)/RPMS/* $(rpmbuild_dir)/SRPMS/* RPMS
