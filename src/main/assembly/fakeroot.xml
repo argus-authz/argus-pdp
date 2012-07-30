@@ -56,14 +56,14 @@ Installed in a fakeroot directory structure.
     <fileSets>
         <!-- /usr/share/argus/pdp home directory -->
         <fileSet>
-            <directory>src/main/empty-dir</directory>
-            <excludes><exclude>.empty</exclude></excludes>
+            <directory>src/main/build</directory>
+            <excludes><exclude>*</exclude></excludes>
             <outputDirectory>/usr/share/argus/pdp</outputDirectory>
         </fileSet>
         <!-- /usr/sbin directory -->
         <fileSet>
-            <directory>src/main/empty-dir</directory>
-            <excludes><exclude>.empty</exclude></excludes>
+            <directory>src/main/build</directory>
+            <excludes><exclude>*</exclude></excludes>
             <outputDirectory>/usr/sbin</outputDirectory>
         </fileSet>
         <!-- /usr/share/argus/pdp/sbin/pdpctl control script -->
@@ -93,8 +93,8 @@ Installed in a fakeroot directory structure.
         </fileSet>
         <!-- /var/log/argus/pdp logging directory -->
         <fileSet>
-            <directory>src/main/empty-dir</directory>
-            <excludes><exclude>.empty</exclude></excludes>
+            <directory>src/main/build</directory>
+            <excludes><exclude>*</exclude></excludes>
             <outputDirectory>/var/log/argus/pdp</outputDirectory>
             <directoryMode>0750</directoryMode>
         </fileSet>        

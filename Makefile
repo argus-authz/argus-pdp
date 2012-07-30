@@ -6,28 +6,33 @@ rpmbuild_dir=$(shell pwd)/rpmbuild
 settings_file=src/main/build/emi-build-settings.xml
 stage_dir=$(shell pwd)/stage
 
-.PHONY: etics dist clean rpm
+.PHONY: etics package clean rpm
 
-all: dist
+all: package rpm
 
 clean:	
 	rm -rf target $(rpmbuild_dir) stage tgz RPMS $(spec)
 
-dist: prepare-spec
+package: spec
+	mvn -B package
+
+package-etics: spec-etics
 	mvn -B -s $(settings_file) package
 
-prepare-spec:
-	sed -e 's#@@BUILD_SETTINGS@@#$(settings_file)#g' $(spec).in > $(spec)
+spec-etics:
+	sed -e 's#@@BUILD_SETTINGS@@#-s $(settings_file)#g' $(spec).in > $(spec)
 
-rpm: prepare-spec
-	mkdir -p 	$(rpmbuild_dir)/BUILD $(rpmbuild_dir)/RPMS \
-				$(rpmbuild_dir)/SOURCES $(rpmbuild_dir)/SPECS \
-				$(rpmbuild_dir)/SRPMS
-	
+spec:
+	sed -e 's#@@BUILD_SETTINGS@@# #g' $(spec).in > $(spec)
+
+rpm: 
+	mkdir -p $(rpmbuild_dir)/BUILD $(rpmbuild_dir)/RPMS \
+		$(rpmbuild_dir)/SOURCES $(rpmbuild_dir)/SPECS \
+		$(rpmbuild_dir)/SRPMS
 	cp target/$(name)-$(version).src.tar.gz $(rpmbuild_dir)/SOURCES/$(name)-$(version).tar.gz
 	rpmbuild --nodeps -v -ba $(spec) --define "_topdir $(rpmbuild_dir)"
 
-etics: dist rpm
+etics: package-etics rpm
 	mkdir -p tgz RPMS
 	cp target/*.tar.gz tgz
 	cp -r $(rpmbuild_dir)/RPMS/* $(rpmbuild_dir)/SRPMS/* RPMS

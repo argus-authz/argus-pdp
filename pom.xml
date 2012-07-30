@@ -141,8 +141,9 @@
                         <exclude>**/resources/**</exclude>
                         <exclude>**/main/scripts/**</exclude>
                         <exclude>**/package/**</exclude>
+                        <exclude>**/build/**</exclude>
                     </excludes>
-                    <strictChecking>true</strictChecking>
+                    <strictCheck>false</strictCheck>
                 </configuration>
                 <executions>
                     <execution>
@@ -370,15 +371,12 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <workingDirectory>${project.build.directory}</workingDirectory>
-                                    <executable>tar</executable>
+                                    <workingDirectory>${project.build.directory}/argus-pdp-fakeroot.dir</workingDirectory>
+                                    <executable>/bin/sh</executable>
                                     <arguments>
-                                        <argument>-C</argument>
-                                        <argument>argus-pdp-standalone.dir</argument>
-                                        <argument>-cvzf</argument>
-                                        <argument>${project.artifactId}-${project.version}.tar.gz</argument>
-                                        <argument>.</argument>
-                                    </arguments>
+                                        <argument>${basedir}/src/main/build/emi-binary-tarball.sh</argument>
+                                        <argument>${project.version}</argument>
+                                   </arguments>
                                 </configuration>
                             </execution>
                             <execution>

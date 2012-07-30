@@ -36,7 +36,7 @@ The Argus Authorization Service is composed of three main components:
 %setup -q -n argus-pdp
 
 %build
-mvn -B -s @@BUILD_SETTINGS@@ package
+mvn -B @@BUILD_SETTINGS@@ package
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -84,20 +84,20 @@ if [ $1 -eq 1 ] ; then
 fi
 
 %files
-%defattr(-,root,root)
-%{_initrddir}/argus-pdp
-%dir ${_sysconfdir}/argus/pdp
-%config(noreplace) ${_sysconfdir}/argus/pdp/logging.xml
-%config(noreplace) ${_sysconfdir}/argus/pdp/pdp.ini
-%config(noreplace) ${_sysconfdir}/sysconfig/argus-pdp
-${_sbindir}/pdpctl
-%dir ${_datadir}/argus/pdp
-%dir ${_datadir}/argus/pdp/sbin
-${_datadir}/argus/pdp/logs
-${_datadir}/argus/pdp/conf
-${_datadir}/argus/pdp/doc
-${_datadir}/argus/pdp/lib
-${_datadir}/argus/pdp/sbin/pdpctl
+%defattr(-,root,root,-)
+%{_sysconfdir}/init.d/argus-pdp
+%dir %{_sysconfdir}/argus/pdp
+%config(noreplace) %{_sysconfdir}/argus/pdp/logging.xml
+%config(noreplace) %{_sysconfdir}/argus/pdp/pdp.ini
+%config(noreplace) %{_sysconfdir}/sysconfig/argus-pdp
+%{_sbindir}/pdpctl
+%dir %{_datadir}/argus/pdp
+%dir %{_datadir}/argus/pdp/sbin
+%{_datadir}/argus/pdp/logs
+%{_datadir}/argus/pdp/conf
+%{_datadir}/argus/pdp/doc
+%{_datadir}/argus/pdp/lib
+%{_datadir}/argus/pdp/sbin/pdpctl
 %dir %{_defaultdocdir}/argus/pdp
 %{_defaultdocdir}/argus/pdp/COPYRIGHT
 %{_defaultdocdir}/argus/pdp/LICENSE
