@@ -279,7 +279,7 @@
                                     <workingDirectory>${project.build.directory}/pdp-standalone.dir</workingDirectory>
                                     <executable>/bin/sh</executable>
                                     <arguments>
-                                        <argument>${basedir}/src/script/package/emi-symlinks.sh</argument>
+                                        <argument>${basedir}/src/main/build/emi-symlinks.sh</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -359,7 +359,7 @@
                                     <workingDirectory>${project.build.directory}/argus-pdp-fakeroot.dir</workingDirectory>
                                     <executable>/bin/sh</executable>
                                     <arguments>
-                                        <argument>${basedir}/src/script/package/emi-symlinks.sh</argument>
+                                        <argument>${basedir}/src/main/build/emi-symlinks.sh</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
