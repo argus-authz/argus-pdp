@@ -72,9 +72,7 @@ for jarname in argus-pdp-pep-common voms-api-java trustmanager bcprov ; do
 done
 # on install register the service in init.d
 if [ $1 -eq 1 ]; then 
-
     /sbin/chkconfig --add argus-pdp
-
 fi
 
 %postun
