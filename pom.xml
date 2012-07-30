@@ -364,6 +364,24 @@
                                 </configuration>
                             </execution>
                             <execution>
+                                <id>create-emi-tarball</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${project.build.directory}</workingDirectory>
+                                    <executable>tar</executable>
+                                    <arguments>
+                                        <argument>-C</argument>
+                                        <argument>argus-pdp-standalone.dir</argument>
+                                        <argument>-cvzf</argument>
+                                        <argument>${project.artifactId}-${project.version}.tar.gz</argument>
+                                        <argument>.</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
                                 <id>delete-emi-symlinks</id>
                                 <phase>pre-clean</phase>
                                 <goals>
