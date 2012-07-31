@@ -32,6 +32,7 @@ Installed in a fakeroot directory structure.
             <outputDirectory>/var/lib/argus/pdp/lib</outputDirectory>
             <excludes>
                 <exclude>net.jcip:*</exclude>
+                <exclude>log4j:log4j</exclude>
                 <!-- use jars from /usr/share/java directory -->
                 <exclude>org.bouncycastle:*</exclude>
                 <exclude>emi:trustmanager</exclude>
