@@ -1,3 +1,5 @@
 /.settings
 /target
 /rpmbuild
+/RPMS
+/tgz
