@@ -357,7 +357,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <workingDirectory>${project.build.directory}/argus-pdp-fakeroot.dir</workingDirectory>
+                                    <workingDirectory>${project.build.directory}/${project.build.finalName}-fakeroot.dir</workingDirectory>
                                     <executable>/bin/sh</executable>
                                     <arguments>
                                         <argument>${basedir}/src/main/build/emi-symlinks.sh</argument>
@@ -371,11 +371,11 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <workingDirectory>${project.build.directory}/argus-pdp-fakeroot.dir</workingDirectory>
+                                    <workingDirectory>${project.build.directory}/${project.build.finalName}-fakeroot.dir</workingDirectory>
                                     <executable>/bin/sh</executable>
                                     <arguments>
                                         <argument>${basedir}/src/main/build/emi-binary-tarball.sh</argument>
-                                        <argument>${project.version}</argument>
+                                        <argument>${project.build.finalName}-${project.version}</argument>
                                    </arguments>
                                 </configuration>
                             </execution>
@@ -386,7 +386,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <workingDirectory>${project.build.directory}/argus-pdp-fakeroot.dir</workingDirectory>
+                                    <workingDirectory>${project.build.directory}/${project.build.finalName}-fakeroot.dir</workingDirectory>
                                     <executable>/bin/rm</executable>
                                     <arguments>
                                         <argument>-f</argument>
