@@ -7,12 +7,12 @@
         <groupId>org.glite.authz</groupId>
         <artifactId>argus-parent</artifactId>
         <version>1.5</version>
-        <relativePath>../emi.argus.parent</relativePath>
+        <!-- <relativePath>../emi.argus.parent</relativePath> -->
     </parent>
 
     <name>Argus PDP</name>
     <groupId>org.glite.authz</groupId>
-    <artifactId>pdp</artifactId>
+    <artifactId>argus-pdp</artifactId>
     <version>1.5.2</version>
 
     <description>XACML based authorization service</description>
@@ -24,9 +24,6 @@
             <id>switch</id>
             <name>SWITCH Releases</name>
             <url>http://www.switch.ch/grid/authz/docs/maven2/release</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
         </repository>
     </repositories>
 
