@@ -2,9 +2,11 @@ name=argus-pdp
 spec=fedora/$(name).spec
 version=$(shell grep "Version:" $(spec) | sed -e "s/Version://g" -e "s/[ \t]*//g")
 release=1
+
 rpmbuild_dir=$(shell pwd)/rpmbuild
 settings_file=project/emi-maven-settings.xml
 stage_dir=$(shell pwd)/stage
+prefix=/
 
 .PHONY: etics package clean rpm
 
