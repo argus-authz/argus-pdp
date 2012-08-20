@@ -1,6 +1,9 @@
 /.settings
+/*.tar.gz
 /target
 /rpmbuild
+/debbuild
 /RPMS
 /tgz
-/stage
+
+
