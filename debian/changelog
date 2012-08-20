@@ -1,0 +1,5 @@
+argus-pdp-pep-common (1.3.2-1) unstable; urgency=low
+
+  * Initial release for Debian.
+
+ -- Valery Tschopp <valery.tschopp@switch.ch>  Thu, 16 Aug 2012 09:52:59 +0200

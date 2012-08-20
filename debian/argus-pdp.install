@@ -1,0 +1,6 @@
+usr/sbin/pdpctl
+usr/share/argus/pdp/*
+usr/share/argus/pdp/sbin/pdpctl
+var/lib/argus/pdp/lib/*.jar
+var/lib/argus/pdp/lib/endorsed/*.jar
+

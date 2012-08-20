@@ -1,0 +1,7 @@
+usr/sbin
+usr/share/argus/pdp
+var/lib/argus/pdp
+var/lib/argus/pdp/lib
+var/lib/argus/pdp/lib/endorsed
+var/log/argus/pdp
+
