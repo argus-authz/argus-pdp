@@ -31,13 +31,11 @@
 # Description:       Provides the PDP server function of the Argus-service
 ### END INIT INFO
 #
-# Author(s): Maria Alandes Pradillo <yaim-contact@cern.ch>
+# Author(s): Joel Casutt <argus-support@cern.ch>
 #            Valery Tschopp <argus-support@cern.ch>
-#            Joel Casutt <argus-support@cern.ch>
 #
-# Version: V2.2
-# Date: 03/23/2011
-# $Id$
+# Version: V2.3
+# Date: 21/08/2012
 ###############################################################################
 # set -x
 
@@ -75,10 +73,16 @@ elif [ -d "/var/lock" ]; then
 fi
 
 # source optional system configuration
-if [ -r "/etc/sysconfig/argus-pdp" ]; then
+# from /etc/sysconfig dir on SL5/SL6
+if [ -r "/etc/sysconfig/${NAME}" ]; then
     # Auto-export variables to subsequent scripts
     set -a
-    source /etc/sysconfig/argus-pdp
+    source "/etc/sysconfig/${NAME}"
+# from /etc/default dir on Debian6
+elif [ -r "/etc/default/${NAME}" ]; then
+    # Auto-export variables to subsequent scripts
+    set -a
+    source "/etc/default/${NAME}"
 fi
 
 
