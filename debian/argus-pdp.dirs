@@ -1,5 +1,9 @@
+etc/argus/pdp
+etc/default
+etc/init.d
 usr/sbin
 usr/share/argus/pdp
+usr/share/argus/pdp/sbin
 var/lib/argus/pdp
 var/lib/argus/pdp/lib
 var/lib/argus/pdp/lib/endorsed

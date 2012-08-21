@@ -1,6 +1,48 @@
-usr/sbin/pdpctl
-usr/share/argus/pdp/*
-usr/share/argus/pdp/sbin/pdpctl
-var/lib/argus/pdp/lib/*.jar
-var/lib/argus/pdp/lib/endorsed/*.jar
+## conffiles -> argus-pdp.conffiles
+#etc/argus/pdp/logging.xml
+#etc/argus/pdp/pdp.ini
 
+## default (sysconfig) -> argus-pdp.default
+#etc/default/argus-pdp
+
+## init.d
+#etc/init.d/argus-pdp -> argus-pdp.init.d
+
+## others
+usr/sbin/pdpctl
+usr/share/argus/pdp/conf
+#usr/share/argus/pdp/doc
+usr/share/argus/pdp/lib
+usr/share/argus/pdp/logs
+usr/share/argus/pdp/sbin/pdpctl
+var/lib/argus/pdp/lib/argus-pdp-1.5.2.jar
+var/lib/argus/pdp/lib/bcprov-jdk15-1.46.jar
+var/lib/argus/pdp/lib/commons-codec-1.3.jar
+var/lib/argus/pdp/lib/commons-collections-3.1.jar
+var/lib/argus/pdp/lib/commons-httpclient-3.0.1.jar
+var/lib/argus/pdp/lib/commons-lang-2.1.jar
+var/lib/argus/pdp/lib/herasaf-xacml-core-1.0.0-M2.jar
+var/lib/argus/pdp/lib/ini4j-0.5.2.jar
+var/lib/argus/pdp/lib/jcl-over-slf4j-1.5.8.jar
+var/lib/argus/pdp/lib/jetty-6.1.18.jar
+var/lib/argus/pdp/lib/jetty-java5-threadpool-6.1.18.jar
+var/lib/argus/pdp/lib/jetty-sslengine-6.1.18.jar
+var/lib/argus/pdp/lib/jetty-util-6.1.18.jar
+var/lib/argus/pdp/lib/joda-time-1.6.jar
+var/lib/argus/pdp/lib/jul-to-slf4j-1.5.8.jar
+var/lib/argus/pdp/lib/log4j-over-slf4j-1.5.8.jar
+var/lib/argus/pdp/lib/logback-classic-0.9.18.jar
+var/lib/argus/pdp/lib/logback-core-0.9.18.jar
+var/lib/argus/pdp/lib/not-yet-commons-ssl-0.3.9.jar
+var/lib/argus/pdp/lib/opensaml-2.3.2.jar
+var/lib/argus/pdp/lib/openws-1.3.1.jar
+var/lib/argus/pdp/lib/servlet-api-2.5-20081211.jar
+var/lib/argus/pdp/lib/slf4j-api-1.5.8.jar
+var/lib/argus/pdp/lib/velocity-1.5.jar
+var/lib/argus/pdp/lib/xmlsec-1.4.3.jar
+var/lib/argus/pdp/lib/xmltooling-1.2.2.jar
+var/lib/argus/pdp/lib/endorsed/serializer-2.7.1.jar
+var/lib/argus/pdp/lib/endorsed/xalan-2.7.1.jar
+var/lib/argus/pdp/lib/endorsed/xercesImpl-2.9.1.jar
+var/lib/argus/pdp/lib/endorsed/xml-apis-1.3.04.jar
+var/lib/argus/pdp/lib/endorsed/xml-resolver-1.2.jar
