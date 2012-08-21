@@ -27,7 +27,6 @@ maven_settings_file=project/maven-settings.xml
 
 rpmbuild_dir=$(CURDIR)/rpmbuild
 debbuild_dir = $(CURDIR)/debbuild
-stage_dir=$(CURDIR)/stage
 tmp_dir=$(CURDIR)/tmp
 
 .PHONY: clean spec package dist rpm deb install
@@ -35,7 +34,7 @@ tmp_dir=$(CURDIR)/tmp
 all: package
 
 clean:
-	rm -rf target $(rpmbuild_dir) $(debbuild_dir) $(tmp_dir) *.tar.gz stage tgz RPMS $(spec_file)
+	rm -rf target $(rpmbuild_dir) $(debbuild_dir) $(tmp_dir) *.tar.gz tgz RPMS $(spec_file)
 
 
 spec:
