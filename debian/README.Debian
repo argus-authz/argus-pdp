@@ -1,1 +1,6 @@
-patched to include bcprov-1.47 for maven repo. The Debian6 is too old.
+argus-pdp for Debian
+--------------------
+
+<possible notes regarding this package - if none, delete this file>
+
+ -- Valery Tschopp <valery.tschopp@switch.ch>  Wed, 22 Aug 2012 11:10:59 +0200

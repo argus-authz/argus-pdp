@@ -1,12 +1,12 @@
 ## conffiles -> argus-pdp.conffiles
-#etc/argus/pdp/logging.xml
-#etc/argus/pdp/pdp.ini
+etc/argus/pdp/logging.xml
+etc/argus/pdp/pdp.ini
 
 ## default (sysconfig) -> argus-pdp.default
-#etc/default/argus-pdp
+etc/default/argus-pdp
 
 ## init.d
-#etc/init.d/argus-pdp -> argus-pdp.init.d
+etc/init.d/argus-pdp
 
 ## others
 usr/sbin/pdpctl
