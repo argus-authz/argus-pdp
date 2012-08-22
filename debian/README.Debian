@@ -1,6 +1,10 @@
 argus-pdp for Debian
 --------------------
 
-<possible notes regarding this package - if none, delete this file>
+On Debian 6, the available bouncycastle library is too old (bcprov-java 1.44). The upstream
+sources are patched to use bcprov 1.46 and embed it in the /var/lib/argus/pdp/lib directory.
+
+On Debian, the system configuration are stored in /etc/default. The upstream source are patched
+to rename the RHEL /etc/sysconfig directory to /etc/default.
 
  -- Valery Tschopp <valery.tschopp@switch.ch>  Wed, 22 Aug 2012 11:10:59 +0200
