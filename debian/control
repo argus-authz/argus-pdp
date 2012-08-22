@@ -10,7 +10,7 @@ Vcs-Browser: https://github.com/argus-authz/argus-pdp
 
 Package: argus-pdp
 Architecture: all
-Depends: default-jre-headless, libargus-pdp-pep-common-java, ${misc:Depends}
+Depends: default-jre-headless, lsb-base, libargus-pdp-pep-common-java, ${misc:Depends}
 Description: Argus PDP (Policy Decision Point)
  The Argus Authorization Service renders consistent authorization 
  decisions for distributed services (e.g., user interfaces, 
