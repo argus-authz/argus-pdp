@@ -47,12 +47,15 @@ package: spec
 	mvn -B -s $(maven_settings_file) package
 
 
-dist: package
-	@echo "Repackaging the maven source tarball..."
+dist:
+	@echo "Package the sources..."
 	test ! -d $(tmp_dir) || rm -fr $(tmp_dir)
-	mkdir -p $(tmp_dir)
-	tar -C $(tmp_dir) -xzf target/$(name)-$(version).src.tar.gz
-	mv $(tmp_dir)/$(name) $(tmp_dir)/$(name)-$(version)
+	mkdir -p $(tmp_dir)/$(name)-$(version)
+	cp .classpath .project Makefile README.md pom.xml $(tmp_dir)/$(name)-$(version)
+	cp -r debian fedora $(tmp_dir)/$(name)-$(version)
+	cp -r project $(tmp_dir)/$(name)-$(version)
+	cp -r doc $(tmp_dir)/$(name)-$(version)
+	cp -r src $(tmp_dir)/$(name)-$(version)
 	test ! -f $(name)-$(version).tar.gz || rm $(name)-$(version).tar.gz
 	tar -C $(tmp_dir) -czf $(name)-$(version).tar.gz $(name)-$(version)
 	rm -fr $(tmp_dir)
