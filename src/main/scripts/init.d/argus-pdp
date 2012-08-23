@@ -56,39 +56,39 @@ else
     exit 1
 fi
 
-PDP_PROG="${NAME}"
+PDP_PROG="$NAME"
 SHUTDOWN_WAIT=60
 KILL_WAIT=15
 HAS_LOCK=0
 PDP_LOCK=
-PDP_PID=${PDP_PID:-"/var/run/${NAME}.pid"}
+PDP_PID=${PDP_PID:-"/var/run/$(NAME).pid"}
 
 # See if there is an appropriate location for the lock-file, if not, do not use a lock-file
 if [ -d "/var/lock/subsys" ]; then
-    PDP_LOCK="/var/lock/subsys/${NAME}"
+    PDP_LOCK="/var/lock/subsys/$NAME"
     HAS_LOCK=1
 elif [ -d "/var/lock" ]; then
-    PDP_LOCK="/var/lock/${NAME}"
+    PDP_LOCK="/var/lock/$NAME"
     HAS_LOCK=1
 fi
 
 # source optional system configuration
 # from /etc/sysconfig dir on SL5/SL6
-if [ -r "/etc/sysconfig/${NAME}" ]; then
+if [ -r "/etc/sysconfig/$NAME" ]; then
     # Auto-export variables to subsequent scripts
     set -a
-    source "/etc/sysconfig/${NAME}"
+    source "/etc/sysconfig/$NAME"
 # from /etc/default dir on Debian6
-elif [ -r "/etc/default/${NAME}" ]; then
+elif [ -r "/etc/default/$NAME" ]; then
     # Auto-export variables to subsequent scripts
     set -a
-    source "/etc/default/${NAME}"
+    source "/etc/default/$NAME"
 fi
 
 
 # Function to start the PDP daemon
 function start() {
-    echo -n "Starting ${PDP_PROG}... "
+    echo -n "Starting $PDP_PROG... "
     # get the current state of the program, this also creates appropriate pid and lock files
     # if the program is running but the files are missing.
     _current_state
@@ -119,7 +119,7 @@ function start() {
 
 # Function to stop the PDP
 function stop() {
-    echo -n "Stopping ${PDP_PROG}... "
+    echo -n "Stopping $PDP_PROG... "
     _current_state
     state=$?
     
@@ -136,7 +136,7 @@ function stop() {
             sleep 1
             let count=${count}+1
             if [ $count -ge $SHUTDOWN_WAIT ] && ! $killed; then
-                echo -n "waited ${SHUTDOWN_WAIT} s, force kill"
+                echo -n "waited $SHUTDOWN_WAIT s, force kill"
                 kill -9 $kpid
                 killed=true
             fi
@@ -154,10 +154,10 @@ function status() {
     _current_state
     state=$?
     if [ $state -eq 5 ]; then
-        echo "${PDP_PROG} is not running..."
+        echo "$PDP_PROG is not running..."
         return $state
     else
-        echo "${PDP_PROG} is running..."
+        echo "$PDP_PROG is running..."
     fi
 }
 
@@ -166,7 +166,7 @@ function info() {
     _current_state
     state=$?
     if [ $state -eq 5 ]; then
-        echo "${PDP_PROG} is not running..."
+        echo "$PDP_PROG is not running..."
         return $state
     else
         $PDPCTL status
@@ -178,7 +178,7 @@ function reloadpolicy() {
     _current_state
     state=$?
     if [ $state -eq 5 ]; then
-        echo "${PDP_PROG} is not running..."
+        echo "$PDP_PROG is not running..."
         return $state
     else
        $PDPCTL reloadPolicy
