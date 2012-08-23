@@ -47,7 +47,7 @@ package: spec
 	mvn -B -s $(maven_settings_file) package
 
 
-dist:
+dist: spec
 	@echo "Package the sources..."
 	test ! -d $(tmp_dir) || rm -fr $(tmp_dir)
 	mkdir -p $(tmp_dir)/$(name)-$(version)
