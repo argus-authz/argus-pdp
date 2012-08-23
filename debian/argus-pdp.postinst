@@ -21,8 +21,12 @@ set -e
 case "$1" in
     configure)
     # create links to /usr/share/java jar files from dependencies
-    for jarname in argus-pdp-pep-common voms-api-java trustmanager ; do
-        [ -f /usr/share/java/$jarname.jar ] || exit 1
+    #TODO: for jarname in argus-pdp-pep-common voms-api-java trustmanager ; do
+    for jarname in argus-pdp-pep-common ; do
+        if [ ! -f /usr/share/java/$jarname.jar ] ; then
+           echo "postinst: missing dependency jar file: $jarname.jar" >&2
+           exit 1
+        fi
         ln -fs /usr/share/java/$jarname.jar /var/lib/argus/pdp/lib
     done
     ;;
