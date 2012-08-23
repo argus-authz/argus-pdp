@@ -1,8 +1,8 @@
-## conffiles -> argus-pdp.conffiles
+## conffiles
 etc/argus/pdp/logging.xml
 etc/argus/pdp/pdp.ini
 
-## default (sysconfig) -> argus-pdp.default
+## default (sysconfig)
 etc/default/argus-pdp
 
 ## init.d
