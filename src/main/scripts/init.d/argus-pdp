@@ -61,7 +61,7 @@ SHUTDOWN_WAIT=60
 KILL_WAIT=15
 HAS_LOCK=0
 PDP_LOCK=
-PDP_PID=${PDP_PID:-"/var/run/$(NAME).pid"}
+PDP_PID=${PDP_PID:-"/var/run/$NAME.pid"}
 
 # See if there is an appropriate location for the lock-file, if not, do not use a lock-file
 if [ -d "/var/lock/subsys" ]; then
