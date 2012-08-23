@@ -17,9 +17,14 @@ set -e
 # the debian-policy package
 
 
-# dh_installdeb will automatically replace this a "service stop" script
-
-#DEBHELPER#
+# stop the service
+if [ -x "/etc/init.d/argus-pdp" ]; then
+    if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+        invoke-rc.d argus-pdp stop || exit $?
+    else
+        /etc/init.d/argus-pdp stop || exit $?
+    fi
+fi
 
 case "$1" in
     remove|upgrade|deconfigure)

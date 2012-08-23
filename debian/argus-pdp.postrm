@@ -29,8 +29,9 @@ case "$1" in
     ;;
 esac
 
-# dh_installdeb will automatically replace this with a "deregister service script"
-
-#DEBHELPER#
+# unregister the service
+if [ "$1" = "purge" ] ; then
+    update-rc.d argus-pdp remove >/dev/null
+fi
 
 exit 0
