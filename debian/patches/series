@@ -1,3 +1,4 @@
+init_without_required_start_pap.patch
 assembly_renames_sysconfig_to_default.patch
 assembly_embeds_bcprov_in_lib.patch
 pom_defines_bcprov_1_46.patch
