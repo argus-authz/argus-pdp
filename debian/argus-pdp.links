@@ -1,0 +1,7 @@
+# create links: $2 -> $1
+usr/share/argus/pdp/sbin/pdpctl usr/sbin/pdpctl
+etc/argus/pdp usr/share/argus/pdp/conf
+usr/share/doc/argus-pdp usr/share/argus/pdp/doc
+var/lib/argus/pdp/lib usr/share/argus/pdp/lib
+var/log/argus/pdp usr/share/argus/pdp/logs
+

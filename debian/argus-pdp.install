@@ -9,11 +9,6 @@ etc/default/argus-pdp
 etc/init.d/argus-pdp
 
 ## others
-usr/sbin/pdpctl
-usr/share/argus/pdp/conf
-#usr/share/argus/pdp/doc
-usr/share/argus/pdp/lib
-usr/share/argus/pdp/logs
 usr/share/argus/pdp/sbin/pdpctl
 var/lib/argus/pdp/lib/argus-pdp-1.5.2.jar
 var/lib/argus/pdp/lib/bcprov-jdk15-1.46.jar
