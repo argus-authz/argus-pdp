@@ -16,6 +16,13 @@ export JAVA_HOME=/usr/lib/jvm/default-java
 override_dh_auto_install:
 	dh_auto_install --destdir=debian/tmp
 
+# XXX: debugging info
+override_dh_auto_configure:
+	echo "XXX: Java information:"
+	java -version
+	javac -version
+	dh_auto_configure
+
 # see http://www.debian.org/doc/manuals/maint-guide/dother.en.html#initd
 override_dh_installinit:
 	dh_installinit --onlyscripts
