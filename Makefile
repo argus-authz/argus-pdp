@@ -49,7 +49,7 @@ spec:
 
 package: spec
 	@echo "Build with maven"
-	mvn -B -s $(maven_settings_file) package
+	mvn -B -DskipTests -s $(maven_settings_file) package
 
 
 install:
