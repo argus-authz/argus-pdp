@@ -84,7 +84,7 @@ if [ $1 -eq 1 ]; then
 fi
 # correct /etc/argus/pdp/pdp.ini permission
 if [ -f /etc/argus/pdp/pdp.ini ] ; then
-    chmod 640 /etc/argus/pdp/pdp.ini
+    chmod -f 640 /etc/argus/pdp/pdp.ini
 fi
 
 %preun
