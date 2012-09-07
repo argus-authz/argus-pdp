@@ -77,7 +77,7 @@ Installed in a fakeroot directory structure.
         <fileSet>
             <directory>src/main/config</directory>
             <outputDirectory>/etc/argus/pdp</outputDirectory>
-            <fileMode>0640</fileMode>
+            <fileMode>0644</fileMode>
             <directoryMode>0755</directoryMode>
         </fileSet>
         <!-- /etc/sysconfig/argus-pdp optional config -->
