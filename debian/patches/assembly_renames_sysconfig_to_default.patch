@@ -13,6 +13,6 @@ Index: emi.argus.pdp/src/main/assembly/fakeroot.xml
 -            <outputDirectory>/etc/sysconfig</outputDirectory>
 +            <!-- Debian6 uses /etc/default for system configuration -->
 +            <outputDirectory>/etc/default</outputDirectory>
-             <fileMode>0640</fileMode>
+             <fileMode>0644</fileMode>
          </fileSet>
          <!-- /etc/rc.d/init.d startup script -->
