@@ -82,10 +82,10 @@ build-jar-repository -s -p /var/lib/argus/pdp/lib argus-pdp-pep-common voms-api-
 if [ $1 -eq 1 ]; then 
     /sbin/chkconfig --add argus-pdp
 fi
-# correct /etc/argus/pdp/pdp.ini permission
-if [ -f /etc/argus/pdp/pdp.ini ] ; then
-    chmod -f 640 /etc/argus/pdp/pdp.ini
-fi
+# correct files/dirs permission
+chmod -f 640 %{_sysconfdir}/argus/pdp/pdp.ini
+chmod -f 750 %{_datadir}/argus/pdp/sbin/pdpctl
+chmod -f 750 %{_localstatedir}/log/argus/pdp
 
 %preun
 # on uninstall (0) stop and deregister the service
