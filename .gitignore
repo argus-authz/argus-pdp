@@ -4,6 +4,7 @@
 /rpmbuild
 /debbuild
 /RPMS
+/debs
 /tgz
 /.pc
 argus-pdp.spec
