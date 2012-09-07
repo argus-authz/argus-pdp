@@ -65,7 +65,7 @@ make DESTDIR=$RPM_BUILD_ROOT install
 rm -rf $RPM_BUILD_ROOT
 
 %pre
-# on update stop the service, and clean up the lib directory
+# on update (1) stop the service, and clean up the lib directory
 if [ $1 -gt 1 ] ; then
     /sbin/service argus-pdp stop > /dev/null 2>&1 || :
     # delete all old bundled jar files and links
