@@ -71,20 +71,20 @@ Installed in a fakeroot directory structure.
         <fileSet>
             <directory>src/main/scripts/sbin</directory>
             <outputDirectory>/usr/share/argus/pdp/sbin</outputDirectory>
-            <fileMode>0750</fileMode>
+            <fileMode>0755</fileMode>
         </fileSet>
         <!-- /etc/argus/pdp config directory -->
         <fileSet>
             <directory>src/main/config</directory>
             <outputDirectory>/etc/argus/pdp</outputDirectory>
             <fileMode>0640</fileMode>
-            <directoryMode>0750</directoryMode>
+            <directoryMode>0755</directoryMode>
         </fileSet>
         <!-- /etc/sysconfig/argus-pdp optional config -->
         <fileSet>
             <directory>src/main/scripts/sysconfig</directory>
             <outputDirectory>/etc/sysconfig</outputDirectory>
-            <fileMode>0640</fileMode>
+            <fileMode>0644</fileMode>
         </fileSet>
         <!-- /etc/rc.d/init.d startup script -->
         <fileSet>
