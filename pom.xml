@@ -6,14 +6,14 @@
     <parent>
         <groupId>org.glite.authz</groupId>
         <artifactId>argus-parent</artifactId>
-        <version>1.5</version>
+        <version>1.6</version>
         <!-- <relativePath>../emi.argus.parent</relativePath> -->
     </parent>
 
     <name>Argus PDP</name>
     <groupId>org.glite.authz</groupId>
     <artifactId>argus-pdp</artifactId>
-    <version>1.5.2</version>
+    <version>1.6.0</version>
 
     <description>XACML based authorization service</description>
     <url>https://twiki.cern.ch/twiki/bin/view/EGEE/AuthorizationFramework</url>
