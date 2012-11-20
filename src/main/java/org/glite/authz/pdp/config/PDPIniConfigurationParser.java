@@ -22,8 +22,6 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import javax.net.ssl.X509TrustManager;
-
 import net.jcip.annotations.ThreadSafe;
 
 import org.glite.authz.common.config.AbstractIniServiceConfigurationParser;
@@ -33,7 +31,6 @@ import org.glite.authz.pdp.obligation.IniOHConfigurationParserHelper;
 import org.glite.authz.pdp.obligation.ObligationService;
 import org.glite.authz.pdp.pip.IniPIPConfigurationParserHelper;
 import org.glite.authz.pdp.pip.PolicyInformationPoint;
-import org.glite.voms.VOMSTrustManager;
 import org.ini4j.Ini;
 import org.opensaml.common.binding.security.IssueInstantRule;
 import org.opensaml.ws.security.SecurityPolicy;
@@ -191,9 +188,8 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
         parserPool.setMaxPoolSize(1);
 
         try {
-            X509TrustManager trustManager = new VOMSTrustManager(configBuilder.getTrustMaterialStore());
             HttpClientBuilder soapClientBuilder = buildSOAPClientBuilder(configSection, configBuilder.getKeyManager(),
-                    trustManager);
+                    configBuilder.getTrustManager());
             configBuilder.setSoapClient(new HttpSOAPClient(soapClientBuilder.buildClient(), parserPool));
         } catch (Exception e) {
             throw new ConfigurationException("Unable to read X.509 trust material information.", e);
