@@ -32,12 +32,11 @@ Installed in a fakeroot directory structure.
             <outputDirectory>/var/lib/argus/pdp/lib</outputDirectory>
             <excludes>
                 <exclude>net.jcip:*</exclude>
-                <exclude>log4j:log4j</exclude>
                 <!-- use jars from /usr/share/java directory -->
-                <exclude>org.bouncycastle:*</exclude>
-                <exclude>emi:trustmanager</exclude>
-                <exclude>org.glite.voms:voms-api-java</exclude>
                 <exclude>org.glite.authz:pdp-pep-common</exclude>
+                <exclude>eu.eu-emi.security:canl:*</exclude>
+                <exclude>org.bouncycastle:*</exclude>
+                <exclude>commons-io:*</exclude>
             </excludes>
             <fileMode>0644</fileMode>
         </dependencySet>
@@ -49,6 +48,18 @@ Installed in a fakeroot directory structure.
                 <include>xml-apis:*</include>
                 <include>xml-resolver:*</include>
                 <include>xalan:*</include>
+            </includes>
+            <fileMode>0644</fileMode>
+        </dependencySet>
+        <!-- copy of the OS provided jars -->
+        <dependencySet>
+            <scope>compile</scope>
+            <outputDirectory>/var/lib/argus/pdp/lib/provided</outputDirectory>
+            <includes>
+                <include>org.glite.authz:pdp-pep-common</include>
+                <include>eu.eu-emi.security:canl:*</include>
+                <include>org.bouncycastle:*</include>
+                <include>commons-io:*</include>
             </includes>
             <fileMode>0644</fileMode>
         </dependencySet>
