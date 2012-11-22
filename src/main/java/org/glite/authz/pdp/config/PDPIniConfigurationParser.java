@@ -171,9 +171,10 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
             log.error(errorMsg);
             throw new ConfigurationException(errorMsg);
         }
+        String name= configSection.getName();
 
         String papsStr = IniConfigUtil.getString(configSection, PAP_PROP);
-        log.info("Policy administration points: {}", papsStr);
+        log.info("{}: PAP endpoints: {}", name, papsStr);
         StringTokenizer paps = new StringTokenizer(configSection.get(PAP_PROP), " ");
         while (paps.hasMoreTokens()) {
             configBuilder.getPAPEndpoints().add(paps.nextToken());
@@ -181,19 +182,19 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
 
         int policyRetentionInterval = IniConfigUtil.getInt(configSection, POLICY_RETENTION_PROP,
                 DEFAULT_POLICY_RETENTION, 1, Integer.MAX_VALUE);
-        log.info("Policy retention interval: {} minutes", policyRetentionInterval);
+        log.info("{}: Policy retention interval: {} minutes", name, policyRetentionInterval);
         configBuilder.setPolicyRetentionInterval(policyRetentionInterval);
 
         BasicParserPool parserPool = new BasicParserPool();
         parserPool.setMaxPoolSize(1);
 
-        try {
+//        try {
             HttpClientBuilder soapClientBuilder = buildSOAPClientBuilder(configSection, configBuilder.getKeyManager(),
                     configBuilder.getTrustManager());
             configBuilder.setSoapClient(new HttpSOAPClient(soapClientBuilder.buildClient(), parserPool));
-        } catch (Exception e) {
-            throw new ConfigurationException("Unable to read X.509 trust material information.", e);
-        }
+//        } catch (Exception e) {
+//            throw new ConfigurationException("Unable to read X.509 trust material information.", e);
+//        }
     }
 
     /**
