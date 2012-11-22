@@ -36,10 +36,20 @@ Installed in a fakeroot directory structure.
                 <exclude>org.glite.authz:pdp-pep-common</exclude>
                 <exclude>eu.eu-emi.security:canl:*</exclude>
                 <exclude>org.bouncycastle:*</exclude>
-                <exclude>commons-io:*</exclude>
             </excludes>
             <fileMode>0644</fileMode>
         </dependencySet>
+        <!-- copy of the OS provided jars -->
+        <dependencySet>
+            <scope>compile</scope>
+            <outputDirectory>/var/lib/argus/pdp/lib/provided</outputDirectory>
+            <includes>
+                <include>eu.eu-emi.security:canl:*</include>
+                <include>org.bouncycastle:*</include>
+            </includes>
+            <fileMode>0644</fileMode>
+        </dependencySet>
+        <!-- endorsed xerces/xalan jars -->
         <dependencySet>
             <scope>runtime</scope>
             <outputDirectory>/var/lib/argus/pdp/lib/endorsed</outputDirectory>
@@ -48,18 +58,6 @@ Installed in a fakeroot directory structure.
                 <include>xml-apis:*</include>
                 <include>xml-resolver:*</include>
                 <include>xalan:*</include>
-            </includes>
-            <fileMode>0644</fileMode>
-        </dependencySet>
-        <!-- copy of the OS provided jars -->
-        <dependencySet>
-            <scope>compile</scope>
-            <outputDirectory>/var/lib/argus/pdp/lib/provided</outputDirectory>
-            <includes>
-                <include>org.glite.authz:pdp-pep-common</include>
-                <include>eu.eu-emi.security:canl:*</include>
-                <include>org.bouncycastle:*</include>
-                <include>commons-io:*</include>
             </includes>
             <fileMode>0644</fileMode>
         </dependencySet>
