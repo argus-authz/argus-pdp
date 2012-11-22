@@ -1,3 +1,26 @@
+Changes in Release 1.6.0
+========================
+
+This is the EMI-3 release.
+
+New features:
+- Uses the new common authentication library (caNl).
+- Debian platform support added.
+
+Changes in Release 1.5.0
+========================
+
+This is the EMI-2 release.
+
+New features:
+- SL6 platform support added.
+- Standard service operation and control added.
+- Debian and RPM packaging added.
+
+RfCs implemented:
+- https://savannah.cern.ch/bugs/?92889 - Missing lsb-base dependency
+- https://savannah.cern.ch/bugs/?69134 - use version 1.0 of the HERAS-AF XACML Core engine 
+
 Changes in Release 1.4.0
 ========================
 
