@@ -32,7 +32,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.glite.authz.common.config.ConfigurationException;
 import org.glite.authz.common.http.JettyAdminService;
 import org.glite.authz.common.http.JettyRunThread;
-import org.glite.authz.common.http.JettyShutdownTask;
+import org.glite.authz.common.http.JettyServerShutdownTask;
 import org.glite.authz.common.http.JettySslSelectChannelConnector;
 import org.glite.authz.common.http.ServiceMetricsServlet;
 import org.glite.authz.common.http.StatusCommand;
@@ -262,7 +262,7 @@ public final class PDPDaemon {
         // first shutdown task will force a System.exit(0) after 60 sec.
         adminService.registerShutdownTask(new SystemExitTask(60000));
         adminService.registerShutdownTask(new TimerShutdownTask(backgroundTaskTimer));
-        adminService.registerShutdownTask(new JettyShutdownTask(daemonService));
+        adminService.registerShutdownTask(new JettyServerShutdownTask(daemonService));
 
         return adminService;
     }

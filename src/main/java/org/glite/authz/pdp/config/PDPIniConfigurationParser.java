@@ -18,7 +18,6 @@
 package org.glite.authz.pdp.config;
 
 import java.io.Reader;
-import java.io.StringReader;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -80,16 +79,6 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(PDPIniConfigurationParser.class);
 
-    /** {@inheritDoc} */
-    public PDPConfiguration parse(Reader iniReader) throws ConfigurationException {
-        return parseIni(iniReader);
-    }
-
-    /** {@inheritDoc} */
-    public PDPConfiguration parse(String iniString) throws ConfigurationException {
-        return parseIni(new StringReader(iniString));
-    }
-
     /**
      * {@inheritDoc}
      * 
@@ -117,7 +106,7 @@ public class PDPIniConfigurationParser extends AbstractIniServiceConfigurationPa
      * 
      * @throws ConfigurationException thrown if there is a problem configuring the system
      */
-    private PDPConfiguration parseIni(Reader iniReader) throws ConfigurationException {
+    protected PDPConfiguration parseIni(Reader iniReader) throws ConfigurationException {
 
         Ini pdpIni = new Ini();
         try {
