@@ -4,8 +4,11 @@ Changes in Release 1.6.0
 This is the EMI-3 release.
 
 New features:
+- Debian 6 platform support added.
 - Uses the new common authentication library (caNl).
-- Debian platform support added.
+
+Changes:
+- RPM and Debian packaging moved to separate projects.
 
 Changes in Release 1.5.0
 ========================
