@@ -37,6 +37,7 @@ PDP_CONFDIR=${PDP_CONFDIR:-"$PDP_HOME/conf"}
 PDP_LOGDIR=${PDP_LOGDIR:-"$PDP_HOME/logs"}
 PDP_LIBDIR=${PDP_LIBDIR:-"$PDP_HOME/lib"}
 PDP_ENDORSEDDIR=${PDP_ENDORSEDDIR:-"$PDP_LIBDIR/endorsed"}
+PDP_PROVIDEDDIR=${PDP_PROVIDEDDIR:-"$PDP_LIBDIR/provided"}
 
 # PID file location
 PDP_PID=${PDP_PID:-"/var/run/argus-pdp.pid"}
@@ -59,7 +60,7 @@ fi
 # the install RPM packages
 LOCALCLASSPATH="/usr/share/java/argus-pdp-pep-common.jar"
 if [ "$PDP_USE_OS_CANL" = "false" ] ; then
-	for jar in $PDP_LIBDIR/provided/canl-*.jar
+	for jar in $PDP_PROVIDEDDIR/canl-*.jar
 	do
 	    if [ -f "$jar" ] ; then
 	        LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
@@ -69,7 +70,7 @@ else
     LOCALCLASSPATH="$LOCALCLASSPATH:/usr/share/java/canl.jar"
 fi
 if [ "$PDP_USE_OS_BCPROV" = "false" ] ; then
-	for jar in $PDP_LIBDIR/provided/bcprov-*.jar
+	for jar in $PDP_PROVIDEDDIR/bcprov-*.jar
 	do
 	    if [ -f "$jar" ] ; then
 	        LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
