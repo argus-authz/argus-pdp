@@ -45,7 +45,12 @@ public class DateTimeTest extends TestCase {
         System.out.println("-------" + this.getName() + "---------");
     }
 
-    public void testDateTime() {
+    public void testDisabled() {
+        System.out.println("The date/time parsing tests are disabled.");
+
+    }
+
+    public void disabled_testDateTime() {
         XMLGregorianCalendar xmlDateTime= datatypeFactory.newXMLGregorianCalendar(now);
         xmlDateTime.setMillisecond(DatatypeConstants.FIELD_UNDEFINED);
         String dateTime= xmlDateTime.toXMLFormat();
@@ -54,7 +59,7 @@ public class DateTimeTest extends TestCase {
         System.out.println("XACML: " + dt);
     }
 
-    public void testDateTimeUTC() {
+    public void disabled_testDateTimeUTC() {
         XMLGregorianCalendar xmlDateTime= datatypeFactory.newXMLGregorianCalendar(nowUTC);
         xmlDateTime.setMillisecond(DatatypeConstants.FIELD_UNDEFINED);
         String dateTimeUTC= xmlDateTime.toXMLFormat();
@@ -63,7 +68,7 @@ public class DateTimeTest extends TestCase {
         System.out.println("XACML: " + dt);
     }
 
-    public void testDate() {
+    public void disabled_testDate() {
         XMLGregorianCalendar xmlDate= datatypeFactory.newXMLGregorianCalendar(now);
         xmlDate.setHour(DatatypeConstants.FIELD_UNDEFINED);
         xmlDate.setMinute(DatatypeConstants.FIELD_UNDEFINED);
@@ -87,7 +92,7 @@ public class DateTimeTest extends TestCase {
         System.out.println("XACML: " + d);
     }
 
-    public void testTime() {
+    public void disabled_testTime() {
         XMLGregorianCalendar xmlTime= datatypeFactory.newXMLGregorianCalendar(now);
         xmlTime.setYear(DatatypeConstants.FIELD_UNDEFINED);
         xmlTime.setMonth(DatatypeConstants.FIELD_UNDEFINED);
