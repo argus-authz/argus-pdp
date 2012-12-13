@@ -91,7 +91,9 @@ do
         LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
     fi
 done
+# remove first :
 LOCALCLASSPATH="$(echo $LOCALCLASSPATH | sed 's/^://g')"
+
 # check classpath
 if [ -z "$LOCALCLASSPATH" ]; then
     echo "$0: ERROR: LOCALCLASSPATH empty, check the $PDP_LIBDIR directory"
@@ -103,9 +105,9 @@ check_jarfiles="$(echo $LOCALCLASSPATH | sed 's/:/ /g')"
 for jar in $check_jarfiles
 do
     if [ ! -f "$jar" ] ; then
-    	echo "$0: ERROR: $jar in classpath does not exist"
-    	exit 1
-    fi	
+        echo "$0: ERROR: $jar in classpath does not exist"
+        exit 1
+    fi
 done
 
 # check endorsed directory
