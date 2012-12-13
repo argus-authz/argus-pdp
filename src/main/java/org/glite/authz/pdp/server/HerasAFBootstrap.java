@@ -25,7 +25,6 @@ import org.glite.authz.common.profile.GLiteAuthorizationProfileConstants;
 import org.glite.authz.pdp.xacml.FQANDataTypeAttribute;
 import org.glite.authz.pdp.xacml.FQANEqualFunction;
 import org.glite.authz.pdp.xacml.FQANRegexpFunction;
-
 import org.herasaf.xacml.core.combiningAlgorithm.policy.PolicyCombiningAlgorithm;
 import org.herasaf.xacml.core.combiningAlgorithm.policy.impl.PolicyDenyOverridesAlgorithm;
 import org.herasaf.xacml.core.combiningAlgorithm.policy.impl.PolicyFirstApplicableAlgorithm;
@@ -271,15 +270,10 @@ import org.herasaf.xacml.core.function.impl.stringConversionFunctions.StringNorm
 import org.herasaf.xacml.core.function.impl.stringFunctions.StringConcatenateFunction;
 import org.herasaf.xacml.core.function.impl.stringFunctions.UriStringConcatenateFunction;
 import org.herasaf.xacml.core.simplePDP.initializers.JAXBInitializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** Initializes the core HERASAF library. */
 @ThreadSafe
 public final class HerasAFBootstrap {
-
-    /** Class logger. */
-    private static final Logger LOG = LoggerFactory.getLogger(HerasAFBootstrap.class);
 
     /** Bootstraps the HERASAF library. */
     public static void bootstap() {
@@ -296,20 +290,6 @@ public final class HerasAFBootstrap {
 
         JAXBInitializer jaxbInitializer= new JAXBInitializer();
         jaxbInitializer.run();
-//        try {
-//            JAXBContext jaxbCtx = JAXBContext
-//                    .newInstance("org.herasaf.xacml.core.policy.impl:org.herasaf.xacml.core.context.impl");
-//
-//            ContextAndPolicyConfiguration capConfig = new ContextAndPolicyConfiguration();
-//            capConfig.setContext(jaxbCtx);
-//
-//            ContextAndPolicy.setPolicyProfile(capConfig);
-//            ContextAndPolicy.setRequestCtxProfile(capConfig);
-//            ContextAndPolicy.setRequestCtxProfile(capConfig);
-//        } catch (JAXBException e) {
-//            LOG.error("Unable to initialize JAXB", e);
-//            throw new RuntimeException(e);
-//        }
     }
 
     /** Initialize all the standard attribute data types. */
