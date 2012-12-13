@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <!-- $Id$ -->
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.glite.authz</groupId>
         <artifactId>argus-parent</artifactId>
         <version>1.6</version>
-        <!-- <relativePath>../emi.argus.parent</relativePath> -->
     </parent>
 
     <name>Argus PDP</name>
@@ -205,24 +203,8 @@
     <reporting>
         <plugins>
             <plugin>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <links>
-                        <link>http://java.sun.com/j2se/1.5.0/docs/api/
-                        </link>
-                    </links>
-                    <quiet>true</quiet>
-                    <aggregate>true</aggregate>
-                    <author>false</author>
-                    <version>true</version>
-                    <doctitle>${project.name} ${project.version} Java API.</doctitle>
-                    <windowtitle>${project.name} ${project.version} Java API.
-                    </windowtitle>
-                    <overview>src/main/java/overview.html</overview>
-                </configuration>
-            </plugin>
-            <plugin>
                 <artifactId>maven-jxr-plugin</artifactId>
+                <version>2.3</version>
                 <configuration>
                     <aggregate>true</aggregate>
                     <outputDirectory>${project.reporting.outputDirectory}/xref
@@ -237,6 +219,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.12</version>
                 <configuration>
                     <aggregate>true</aggregate>
                     <outputDirectory>${project.reporting.outputDirectory}/unitTest
@@ -418,6 +401,10 @@
             <email>valery.tschopp@swich.ch</email>
             <organization>SWITCH</organization>
             <organizationUrl>http://www.switch.ch</organizationUrl>
+            <roles>
+                <role>developer</role>
+                <role>documentation</role>
+            </roles>
             <timezone>+1</timezone>
         </developer>
         <developer>
