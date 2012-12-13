@@ -60,22 +60,22 @@ fi
 # the install RPM packages
 LOCALCLASSPATH="/usr/share/java/argus-pdp-pep-common.jar"
 if [ "$PDP_USE_OS_CANL" = "false" ] ; then
-	for jar in $PDP_PROVIDEDDIR/canl-*.jar
-	do
-	    if [ -f "$jar" ] ; then
-	        LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
-	    fi
-	done
+    for jar in $PDP_PROVIDEDDIR/canl-*.jar
+    do
+        if [ -f "$jar" ] ; then
+            LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
+        fi
+    done
 else
     LOCALCLASSPATH="$LOCALCLASSPATH:/usr/share/java/canl.jar"
 fi
 if [ "$PDP_USE_OS_BCPROV" = "false" ] ; then
-	for jar in $PDP_PROVIDEDDIR/bcprov-*.jar
-	do
-	    if [ -f "$jar" ] ; then
-	        LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
-	    fi
-	done
+    for jar in $PDP_PROVIDEDDIR/bcprov-*.jar
+    do
+        if [ -f "$jar" ] ; then
+            LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
+        fi
+    done
 else
     LOCALCLASSPATH="$LOCALCLASSPATH:/usr/share/java/bcprov-1.46.jar"
 fi

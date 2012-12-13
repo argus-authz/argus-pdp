@@ -12,6 +12,7 @@ PDP_JOPTS="-Xmx256M"
 #PDP_LOGDIR="/var/log/argus/pdp"
 #PDP_LIBDIR="/var/lib/argus/pdp/lib"
 #PDP_ENDORSEDDIR="/var/lib/argus/pdp/lib/endorsed"
+#PDP_PROVIDEDDIR="/var/lib/argus/pdp/lib/provided"
 #PDP_PID="/var/run/argus-pdp.pid"
 
 # OS provided dependencies (false to use embedded) 
