@@ -143,16 +143,34 @@ public final class PDPDaemon {
             }
         }
 
-        Server authzService= createDaemonService(daemonConfig,
-                                                 backgroundTaskTimer);
-        JettyRunThread pdpDaemonServiceThread= new JettyRunThread(authzService);
-        pdpDaemonServiceThread.setName("PDP Service");
-        pdpDaemonServiceThread.start();
+        // create the services (pdp and admin)
+        Server jettyServer= createDaemonService(daemonConfig,
+                                                backgroundTaskTimer);
+        JettyRunThread pdpService= new JettyRunThread(jettyServer);
+        pdpService.setName("PDP Service");
 
         JettyAdminService adminService= createAdminService(daemonConfig,
                                                            backgroundTaskTimer,
                                                            policyRepository,
-                                                           authzService);
+                                                           jettyServer);
+
+        // BUG FIX: PDP policies initialization startup race condition with PAP
+        // => Force a policy loading before starting the jetty servers.
+        // https://issues.infn.it/jira/browse/ARGUS-2
+        // https://ggus.eu/ws/ticket_info.php?ticket=96228
+        int MAX_RETRY = 5;
+        int retry = 1;
+        while (!policyRepository.isPolicyInitialized() && retry <= MAX_RETRY) {
+            LOG.info("Policy is not yet loaded! Force refresh ({}/{})...", retry, MAX_RETRY);
+            policyRepository.refreshPolicy();
+            // sleep millis...
+            Thread.sleep(500);
+            retry++;
+        }
+        
+        LOG.debug("start the pdp and admin servers...");
+        // start the jetty servers
+        pdpService.start();
         adminService.start();
 
         LOG.info(Version.getServiceIdentifier() + " started");
