@@ -11,7 +11,7 @@
     <name>Argus PDP</name>
     <groupId>org.glite.authz</groupId>
     <artifactId>argus-pdp</artifactId>
-    <version>1.6.0</version>
+    <version>1.6.1</version>
 
     <description>XACML based authorization service</description>
     <url>https://twiki.cern.ch/twiki/bin/view/EGEE/AuthorizationFramework</url>
