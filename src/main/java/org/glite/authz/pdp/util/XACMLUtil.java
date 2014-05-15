@@ -41,6 +41,7 @@ import org.opensaml.xacml.ctx.StatusType;
 import org.opensaml.xacml.policy.EffectType;
 import org.opensaml.xacml.policy.ObligationType;
 import org.opensaml.xacml.policy.ObligationsType;
+import org.opensaml.xacml.policy.AttributeAssignmentType;
 import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionQueryType;
 import org.opensaml.xacml.profile.saml.XACMLAuthzDecisionStatementType;
 import org.opensaml.xml.io.Marshaller;
@@ -75,6 +76,9 @@ public class XACMLUtil {
 
     @SuppressWarnings("unchecked")
     private static XACMLObjectBuilder<ObligationType> obligationBuilder= (XACMLObjectBuilder<ObligationType>) Configuration.getBuilderFactory().getBuilder(ObligationType.SCHEMA_TYPE_NAME);
+
+    @SuppressWarnings("unchecked")
+    private static XACMLObjectBuilder<AttributeAssignmentType> attributeAssignmentBuilder= (XACMLObjectBuilder<AttributeAssignmentType>) Configuration.getBuilderFactory().getBuilder(AttributeAssignmentType.SCHEMA_TYPE_NAME);
 
     @SuppressWarnings("unchecked")
     private static XACMLObjectBuilder<StatusCodeType> statusCodeBuilder= (XACMLObjectBuilder<StatusCodeType>) Configuration.getBuilderFactory().getBuilder(StatusCodeType.DEFAULT_ELEMENT_NAME);
@@ -199,9 +203,6 @@ public class XACMLUtil {
     /**
      * Transforms a HERAS obligation in to an OpenSAML obligation.
      * 
-     * <em>NOTE:</em> Obligations with attribute assignments are not currently
-     * supported.
-     * 
      * @param herasObligation
      *            HERAS obligation to be transformed
      * 
@@ -213,15 +214,13 @@ public class XACMLUtil {
             return null;
         }
 
-        if (herasObligation.getAttributeAssignments() != null
-                && !herasObligation.getAttributeAssignments().isEmpty()) {
-            LOG.error("Obligations with attribute assignments are nor currently supported");
-            return null;
-        }
-
+        // Create new obligation object
         ObligationType obligation= obligationBuilder.buildObject();
 
-        obligation.setObligationId(herasObligation.getObligationId());
+        // Set the obligationId
+        obligation.setObligationId(Strings.safeTrimOrNullString(herasObligation.getObligationId()));
+
+        // Set the fullfillon
         switch (herasObligation.getFulfillOn()) {
         case DENY:
             obligation.setFulfillOn(EffectType.Deny);
@@ -231,7 +230,24 @@ public class XACMLUtil {
             break;
         }
 
-        // TODO attribute assignement
+        // Add in atttributes when present
+        if (herasObligation.getAttributeAssignments() != null
+                && !herasObligation.getAttributeAssignments().isEmpty()) {
+            List<AttributeAssignmentType> obligationAttributeAssignments = obligation.getAttributeAssignments();
+            AttributeAssignmentType attributeAssignment;
+            for (org.herasaf.xacml.core.policy.impl.AttributeAssignmentType herasAttributeAssignment : herasObligation.getAttributeAssignments()) {
+                attributeAssignment = attributeAssignmentBuilder.buildObject();
+                attributeAssignment.setAttributeId(Strings.safeTrimOrNullString(herasAttributeAssignment.getAttributeId()));
+                attributeAssignment.setDataType(Strings.safeTrimOrNullString(herasAttributeAssignment.getDataType().getDatatypeURI()));
+                // Get first element of list of values only, since OpenSAML has
+                // no support for multivalued attributes
+                if (herasAttributeAssignment.getContent().size() > 1)
+                    LOG.warn("Multi-valued attribute found, only using first one");
+                attributeAssignment.setValue(Strings.safeTrimOrNullString(herasAttributeAssignment.getContent().get(0).toString()));
+                // Add attributeAssignments to obligation
+                obligationAttributeAssignments.add(attributeAssignment);
+            }
+        }
 
         return obligation;
     }
