@@ -47,7 +47,7 @@ dist:
 
 package:
 	@echo "Build package with maven"
-	mvn -B -s $(maven_settings_file) package
+	mvn -B package
 
 
 install:
