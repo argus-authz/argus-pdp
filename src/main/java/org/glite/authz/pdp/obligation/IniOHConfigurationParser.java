@@ -23,30 +23,41 @@ import org.glite.authz.common.config.AbstractConfigurationBuilder;
 import org.glite.authz.common.config.ConfigurationException;
 import org.ini4j.Ini;
 
-/** A parser that transforms an {@link Ini.Section} in to a {@link AbstractObligationHandler}. */
+/**
+ * A parser that transforms an {@link Ini} section in to a
+ * {@link AbstractObligationHandler}.
+ */
 @ThreadSafe
 public interface IniOHConfigurationParser {
 
-    /**
-     * The name of the {@value} property which gives the fully qualified class name of the obligation handler
-     * configuration parser.
-     */
-    public static final String PARSER_CLASS_PROP = "parserClass";
+  /**
+   * The name of the {@value} property which gives the fully qualified class
+   * name of the obligation handler configuration parser.
+   */
+  public static final String PARSER_CLASS_PROP = "parserClass";
 
-    /** The name of the {@value} property which gives the positive integer precedence of the handler. */
-    public static final String PRECEDENCE_PROP = "precedence";
+  /**
+   * The name of the {@value} property which gives the positive integer
+   * precedence of the handler.
+   */
+  public static final String PRECEDENCE_PROP = "precedence";
 
-    /**
-     * Creates a {@link AbstractObligationHandler} from the information within the {@link Ini.Section}.
-     * 
-     * @param iniConfig the INI configuration for the obligation handler
-     * @param configBuilder the configuration builder currently being populated
-     * 
-     * @return the obligation handler
-     * 
-     * @throws ConfigurationException thrown if there is a problem creating the obligation handler from the given
-     *             information
-     */
-    public AbstractObligationHandler parse(Ini.Section iniConfig, AbstractConfigurationBuilder<?> configBuilder)
-            throws ConfigurationException;
+  /**
+   * Creates a {@link AbstractObligationHandler} from the information within the
+   * {@link Ini} section.
+   * 
+   * @param iniConfig
+   *          the INI configuration for the obligation handler
+   * @param configBuilder
+   *          the configuration builder currently being populated
+   * 
+   * @return the obligation handler
+   * 
+   * @throws ConfigurationException
+   *           thrown if there is a problem creating the obligation handler from
+   *           the given information
+   */
+  public AbstractObligationHandler parse(Ini.Section iniConfig,
+    AbstractConfigurationBuilder<?> configBuilder)
+    throws ConfigurationException;
 }

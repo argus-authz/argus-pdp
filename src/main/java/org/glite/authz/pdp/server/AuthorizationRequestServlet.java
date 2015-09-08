@@ -424,7 +424,7 @@ public class AuthorizationRequestServlet extends BaseHttpServlet {
 
     /**
      * Creates the SAML response given the decision reached by the PDP. This
-     * method also sets the {@link AuthzRequestMessageContext#decision}
+     * method also sets the {@link AuthzRequestMessageContext#authorizationResult}
      * property.
      * 
      * @param messageContext

@@ -15,7 +15,7 @@
     limitations under the License.
 -->
 
-<!-- 
+<!--
 Binary distribution with dependency jar files.
 Installed in a fakeroot directory structure.
 -->
@@ -36,6 +36,7 @@ Installed in a fakeroot directory structure.
                 <exclude>org.glite.authz:pdp-pep-common</exclude>
                 <exclude>eu.eu-emi.security:canl:*</exclude>
                 <exclude>org.bouncycastle:*</exclude>
+                <exclude>org.italiangrid:voms-api-java:*</exclude>
             </excludes>
             <fileMode>0644</fileMode>
         </dependencySet>
@@ -46,6 +47,7 @@ Installed in a fakeroot directory structure.
             <includes>
                 <include>eu.eu-emi.security:canl:*</include>
                 <include>org.bouncycastle:*</include>
+                <include>org.italiangrid:voms-api-java:*</include>
             </includes>
             <fileMode>0644</fileMode>
         </dependencySet>
@@ -62,7 +64,7 @@ Installed in a fakeroot directory structure.
             <fileMode>0644</fileMode>
         </dependencySet>
     </dependencySets>
-    
+
     <fileSets>
         <!-- /usr/share/argus/pdp home directory -->
         <fileSet>
@@ -107,7 +109,7 @@ Installed in a fakeroot directory structure.
             <excludes><exclude>*</exclude></excludes>
             <outputDirectory>/var/log/argus/pdp</outputDirectory>
             <directoryMode>0750</directoryMode>
-        </fileSet>        
+        </fileSet>
         <!-- Documentation -->
         <fileSet>
             <directory>doc</directory>
@@ -122,5 +124,5 @@ Installed in a fakeroot directory structure.
         </fileSet>
         -->
     </fileSets>
-    
+
 </assembly>

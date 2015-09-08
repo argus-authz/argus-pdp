@@ -23,23 +23,32 @@ import org.glite.authz.common.config.AbstractConfigurationBuilder;
 import org.glite.authz.common.config.ConfigurationException;
 import org.ini4j.Ini;
 
-/** A parser that transforms an {@link Ini.Section} in to a {@link PolicyInformationPoint}. */
+/**
+ * A parser that transforms an {@link Ini} section S in to a
+ * {@link PolicyInformationPoint}.
+ */
 @ThreadSafe
 public interface IniPIPConfigurationParser {
 
-    /** "parserClass" configuration property name. */
-    public static final String PARSER_CLASS_PROP = "parserClass";
+  /** "parserClass" configuration property name. */
+  public static final String PARSER_CLASS_PROP = "parserClass";
 
-    /**
-     * Created a {@link PolicyInformationPoint} from the information within the {@link Ini.Section}.
-     * 
-     * @param iniConfig the INI configuration for the PIP
-     * @param configBuilder the configuration builder currently being populated
-     * 
-     * @return the PIP
-     * 
-     * @throws ConfigurationException thrown if there is a problem creating the PIP from the given information
-     */
-    public PolicyInformationPoint parse(Ini.Section iniConfig, AbstractConfigurationBuilder<?> configBuilder)
-            throws ConfigurationException;
+  /**
+   * Created a {@link PolicyInformationPoint} from the information within the
+   * section.
+   * 
+   * @param iniConfig
+   *          the INI configuration for the PIP
+   * @param configBuilder
+   *          the configuration builder currently being populated
+   * 
+   * @return the PIP
+   * 
+   * @throws ConfigurationException
+   *           thrown if there is a problem creating the PIP from the given
+   *           information
+   */
+  public PolicyInformationPoint parse(Ini.Section iniConfig,
+    AbstractConfigurationBuilder<?> configBuilder)
+    throws ConfigurationException;
 }
