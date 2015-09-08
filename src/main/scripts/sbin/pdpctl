@@ -60,26 +60,28 @@ fi
 # the install RPM packages
 LOCALCLASSPATH="/usr/share/java/argus-pdp-pep-common.jar"
 if [ "$PDP_USE_OS_CANL" = "false" ] ; then
-    for jar in $PDP_PROVIDEDDIR/canl-*.jar
+    for jar in $PDP_PROVIDEDDIR/canl-*.jar $PDP_PROVIDEDDIR/voms-api-java-*.jar
+
     do
         if [ -f "$jar" ] ; then
             LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
         fi
     done
 else
-    LOCALCLASSPATH="$LOCALCLASSPATH:/usr/share/java/canl.jar"
-fi
-if [ "$PDP_USE_OS_BCPROV" = "false" ] ; then
-    for jar in $PDP_PROVIDEDDIR/bcprov-*.jar
-    do
-        if [ -f "$jar" ] ; then
-            LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
-        fi
-    done
-else
-    LOCALCLASSPATH="$LOCALCLASSPATH:/usr/share/java/bcprov-1.46.jar"
+    LOCALCLASSPATH="$LOCALCLASSPATH:/usr/share/java/canl-*.jar:/usr/share/java/voms-api-java-*.jar"
 fi
 
+if [ "$PDP_USE_OS_BCPROV" = "false" ] ; then
+    for jar in $PDP_PROVIDEDDIR/bcprov-*.jar $PDP_PROVIDEDDIR/bcpkix-*.jar
+
+    do
+        if [ -f "$jar" ] ; then
+            LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
+        fi
+    done
+else
+    LOCALCLASSPATH="$LOCALCLASSPATH:/usr/share/java/bcprov-*.jar"
+fi
 
 # include all embedded jar
 jarfiles="$PDP_LIBDIR/*.jar"
@@ -159,7 +161,7 @@ function print_help {
    echo "PDP control script"
    echo "Usage:"
    echo "  $0 start   - start the PDP service"
-   echo "  $0 stop    - stop the PDP service" 
+   echo "  $0 stop    - stop the PDP service"
    echo "  $0 status  - print PDP status"
    echo "  $0 version - print PDP version"
    echo "  $0 reloadPolicy - reload the PDP policies from the PAP"
@@ -171,7 +173,7 @@ case "$1" in
         start
         ;;
     stop)
-        executeAdminCommand 'shutdown' 
+        executeAdminCommand 'shutdown'
         ;;
     status) 
         executeAdminCommand 'status'
