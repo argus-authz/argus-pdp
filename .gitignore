@@ -1,4 +1,6 @@
 /.settings
+/.classpath
+/.project
 /*.tar.gz
 /target
 /rpmbuild
