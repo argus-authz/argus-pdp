@@ -327,6 +327,8 @@ public final class PDPDaemon {
         server, daemonConfig.getCertChainValidator());
 
       builder.withNeedClientAuth(daemonConfig.isClientCertAuthRequired());
+      builder.withKeyManager(daemonConfig.getKeyManager());
+      
       builder.httpConfiguration().setOutputBufferSize(
         daemonConfig.getSendBufferSize());
 
