@@ -145,7 +145,7 @@ function executeAdminCommand {
 
 function start {
     # Run the PDP
-    $JAVACMD $PDP_JOPTS 'org.glite.authz.pdp.server.PDPDaemon' $PDP_CONF &
+    $JAVACMD $PDP_JOPTS $PDP_START_JOPTS 'org.glite.authz.pdp.server.PDPDaemon' $PDP_CONF &
     if [ -n "$PDP_PID" ]; then
       echo $! > $PDP_PID
     fi

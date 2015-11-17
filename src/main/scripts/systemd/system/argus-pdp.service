@@ -1,0 +1,13 @@
+[Unit]
+Description=Argus Policy Decision Point server
+After=syslog.target network.target
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/sysconfig/argus-pdp
+ExecStart=/usr/sbin/pdpctl start
+ExecStop=/usr/sbin/pdpctl stop
+PIDFile=/var/run/argus-pdp.pid
+
+[Install]
+WantedBy=multi-user.target
