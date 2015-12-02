@@ -5,7 +5,7 @@
 # IPv4 instead of IPv6
 #PDP_JOPTS="-Djava.net.preferIPv4Stack=true"
 # Max memory: 256MB
-PDP_JOPTS="-Xmx256M"
+PDP_JOPTS="-Xmx256M -Djdk.tls.trustNameService=true"
 #PDP_START_JOPTS="-Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=4002,suspend=n"
 #PDP_HOME="/usr/share/argus/pdp"
 #PDP_CONF="/etc/argus/pdp/pdp.ini"
