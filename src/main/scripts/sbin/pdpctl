@@ -30,7 +30,7 @@ while [ -h "$PRG" ]; do
     fi
 done
 PRGDIR=`dirname "$PRG"`
-[ -z "$PDP_HOME" ] && PDP_HOME=`cd "$PRGDIR/.." ; pwd`    
+[ -z "$PDP_HOME" ] && PDP_HOME=`cd "$PRGDIR/.." ; pwd`
 
 # config, log and lib directories
 PDP_CONFDIR=${PDP_CONFDIR:-"$PDP_HOME/conf"}
@@ -57,31 +57,20 @@ if [ ! -x "$JAVACMD" ] ; then
 fi
 
 # uses pdp-pep-common, canl and bouncycastle from
-# the install RPM packages
+# the provided directory
 LOCALCLASSPATH="/usr/share/java/argus-pdp-pep-common.jar"
-if [ "$PDP_USE_OS_CANL" = "false" ] ; then
-    for jar in $PDP_PROVIDEDDIR/canl-*.jar $PDP_PROVIDEDDIR/voms-api-java-*.jar
 
-    do
-        if [ -f "$jar" ] ; then
-            LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
-        fi
-    done
-else
-    LOCALCLASSPATH="$LOCALCLASSPATH:/usr/share/java/canl-java/canl.jar:/usr/share/java/voms-api-java/voms-api-java.jar"
-fi
+for jar in $PDP_PROVIDEDDIR/canl-*.jar $PDP_PROVIDEDDIR/voms-api-java-*.jar; do
+    if [ -f "$jar" ] ; then
+        LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
+    fi
+done
 
-if [ "$PDP_USE_OS_BCPROV" = "false" ] ; then
-    for jar in $PDP_PROVIDEDDIR/bcprov-*.jar $PDP_PROVIDEDDIR/bcpkix-*.jar
-
-    do
-        if [ -f "$jar" ] ; then
-            LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
-        fi
-    done
-else
-    LOCALCLASSPATH="$LOCALCLASSPATH:/usr/share/java/bcprov.jar:/usr/share/java/bcpkix.jar"
-fi
+for jar in $PDP_PROVIDEDDIR/bcprov-*.jar $PDP_PROVIDEDDIR/bcpkix-*.jar; do
+    if [ -f "$jar" ] ; then
+        LOCALCLASSPATH="$LOCALCLASSPATH:$jar"
+    fi
+done
 
 # include all embedded jar
 jarfiles="$PDP_LIBDIR/*.jar"
@@ -137,9 +126,9 @@ function executeAdminCommand {
     if [ -z "$ADMIN_PORT" ] ; then
        ADMIN_PORT="8153"
     fi
-    
+
     ADMIN_PASS=`sed 's/ //g' $PDP_CONF | grep "^adminPassword" | awk 'BEGIN {FS="="}{print $2}'`
-    
+
     $JAVACMD $PDP_JOPTS 'org.glite.authz.common.http.JettyAdminServiceCLI' $ADMIN_HOST $ADMIN_PORT $1 $ADMIN_PASS
 }
 
@@ -175,18 +164,18 @@ case "$1" in
     stop)
         executeAdminCommand 'shutdown'
         ;;
-    status) 
+    status)
         executeAdminCommand 'status'
         ;;
     version)
         version
         ;;
-    reloadPolicy) 
+    reloadPolicy)
         executeAdminCommand 'reloadPolicy'
         ;;
-    *) 
-        print_help 
+    *)
+        print_help
         exit 1
         ;;
 esac
-exit $? 
+exit $?
