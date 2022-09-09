@@ -17,7 +17,7 @@
 
 name=argus-pdp
 
-version=1.7.2
+version=1.7.1
 release=0
 
 prefix=/

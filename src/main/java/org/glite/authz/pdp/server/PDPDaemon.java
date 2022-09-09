@@ -24,15 +24,10 @@ import java.security.Security;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Timer;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.DispatcherType;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -62,8 +57,6 @@ import org.italiangrid.utils.jetty.ThreadPoolBuilder;
 import org.opensaml.DefaultBootstrap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import ch.qos.logback.core.Context;
 
 /**
  * Main class of the PDP Daemon. This class kicks off the embedded Jetty server
@@ -328,14 +321,18 @@ public final class PDPDaemon {
 
       builder.withNeedClientAuth(daemonConfig.isClientCertAuthRequired());
       builder.withKeyManager(daemonConfig.getKeyManager());
-      
+
       builder.httpConfiguration().setOutputBufferSize(
         daemonConfig.getSendBufferSize());
-
       builder.httpConfiguration().setSendDateHeader(false);
       builder.httpConfiguration().setSendServerVersion(false);
 
-      connector = builder.build();
+      connector = builder
+          .withWantClientAuth(daemonConfig.isClientCertAuthRequired())
+          .withDisableJsseHostnameVerification(true)
+          .withTlsProtocol(daemonConfig.getTlsProtocol())
+          .withIncludeProtocols(daemonConfig.getEnabledProtocols())
+          .build();
     }
 
     connector.setHost(daemonConfig.getHostname());
